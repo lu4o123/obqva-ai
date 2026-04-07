@@ -120,6 +120,8 @@ nav .inner{display:flex;align-items:center;justify-content:space-between;padding
 .result-keywords{display:flex;flex-wrap:wrap;gap:6px}
 .kw{font-family:var(--mono);font-size:.68rem;font-weight:500;padding:4px 10px;border-radius:var(--radius-pill);background:var(--dark-100);color:var(--dark-500)}
 .error-msg{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:14px 20px;border-radius:var(--radius-sm);font-size:.88rem;margin-top:12px;display:none}
+.test-banner{background:#fef3c7;border:1.5px solid #f59e0b;color:#92400e;padding:10px 20px;border-radius:var(--radius);font-family:var(--mono);font-size:.78rem;font-weight:600;text-align:center;margin-bottom:20px}
+html.dark .test-banner{background:#451a03;border-color:#b45309;color:#fbbf24}
 html.dark .error-msg{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
 /* PRICING */
 .pricing{padding:60px 20px;max-width:760px;margin:0 auto}
@@ -264,6 +266,8 @@ html.dark .auth-error{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
 </section>
 
 <div class="container">
+
+<div class="test-banner" id="testBanner" style="display:none">⚠️ ТЕСТ РЕЖИМ — обявите са фалшиви, не се използва API. Махни <code>?test</code> от URL-а за истинско генериране.</div>
 
 <div class="card">
   <div class="card-title"><span class="num">1</span> Тип обява</div>
@@ -531,8 +535,20 @@ const BGN_RATE=1.9558;
 
 /* API HEADERS */
 const API_URL = '/api/generate';
+const TEST_MODE = new URLSearchParams(window.location.search).has('test');
+if(TEST_MODE){const tb=document.getElementById('testBanner');if(tb)tb.style.display='block';}
 function getApiHeaders(){
   return {'Content-Type':'application/json'};
+}
+/* TEST MODE - generates fake data without API calls */
+function generateMockListings(platforms, details){
+  return platforms.map(p => ({
+    platform: p,
+    title: `[ТЕСТ] ${details.category || 'Артикул'} — ${details['Марка']||details['Вид']||'Обява'} ${details['Модел']||''} ${details['Година']||''}`.trim(),
+    description: `Това е ТЕСТОВА обява за ${p}.\n\nКатегория: ${details.category||'—'}\n${Object.entries(details).filter(([k])=>k!=='category').map(([k,v])=>`${k}: ${v}`).join('\n')}\n\n⚠️ Тест режим — не се използва API. Добави ?test=1 към URL-а за да активираш.\nМахни ?test от URL-а за истинско генериране.`,
+    keywords: ['тест','обява','демо','Обява-AI',details.category||'продажба'],
+    priceTip: details['Цена (€)'] ? `Препоръчителна цена: ${details['Цена (€)']}€ / ${details['Цена (лв)']||'—'} лв` : 'Добави цена за по-добри резултати.'
+  }));
 }
 const CATEGORIES=[
   {id:'car',name:'Автомобил',icon:'🚗'},{id:'moto',name:'Мотоциклет',icon:'🏍️'},{id:'truck',name:'Камион/Бус',icon:'🚛'},
@@ -678,10 +694,16 @@ genBtn.onclick=async()=>{
   if(uploadedImages.length>0){uploadedImages.forEach(img=>{messages[0].content.push({type:'image',source:{type:'base64',media_type:img.type,data:img.b64}});});messages[0].content.push({type:'text',text:`Анализирай внимателно всичките ${uploadedImages.length} снимки.\n\n`+promptText});}
   else{messages[0].content.push({type:'text',text:promptText});}
   try{
-    const resp=await fetch(API_URL,{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,messages})});
-    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${resp.status}`);}
-    const data=await resp.json();const text=data.content.map(c=>c.text||'').join('');
-    renderResults(JSON.parse(text.replace(/```json|```/g,'').trim()).listings||[]);
+    if(TEST_MODE){
+      // Test mode - no API calls
+      await new Promise(r=>setTimeout(r,1500)); // simulate delay
+      renderResults(generateMockListings(platforms, details));
+    } else {
+      const resp=await fetch(API_URL,{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,messages})});
+      if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${resp.status}`);}
+      const data=await resp.json();const text=data.content.map(c=>c.text||'').join('');
+      renderResults(JSON.parse(text.replace(/```json|```/g,'').trim()).listings||[]);
+    }
   }catch(e){errMsg.textContent=`Грешка: ${e.message}`;errMsg.style.display='block';}
   finally{endProgress();genBtn.disabled=false;genBtn.textContent='✦ Генерирай обяви с AI';updateGenBtn();}
 };
@@ -718,12 +740,21 @@ async function regenPlatform(platformName,card){
   if(uploadedImages.length>0){uploadedImages.slice(0,3).forEach(img=>{msgs[0].content.push({type:'image',source:{type:'base64',media_type:img.type,data:img.b64}});});}
   msgs[0].content.push({type:'text',text:pt});
   try{
+    if(TEST_MODE){
+      await new Promise(r=>setTimeout(r,800));
+      const l=generateMockListings([platformName], details)[0];
+      card.querySelector('.result-title').textContent=l.title+' (регенерирано)';
+      card.querySelector('.result-desc').textContent=l.description;
+      const pe=card.querySelector('.result-price');if(pe&&l.priceTip)pe.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 10h6M9 14h6"/></svg>${esc(l.priceTip)}`;
+      card.querySelector('.result-keywords').innerHTML=(l.keywords||[]).map(k=>`<span class="kw">${esc(k)}</span>`).join('');
+    } else {
     const resp=await fetch(API_URL,{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:msgs})});
     const data=await resp.json();const text=data.content.map(c=>c.text||'').join('');const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
     const l=parsed.listings?parsed.listings[0]:parsed;
     card.querySelector('.result-title').textContent=l.title;card.querySelector('.result-desc').textContent=l.description;
     const pe=card.querySelector('.result-price');if(pe&&l.priceTip)pe.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 10h6M9 14h6"/></svg>${esc(l.priceTip)}`;
     card.querySelector('.result-keywords').innerHTML=(l.keywords||[]).map(k=>`<span class="kw">${esc(k)}</span>`).join('');
+    }
   }catch(e){console.error('Regen:',e);}
   btn.classList.remove('loading');btn.innerHTML='🔄 Регенерирай';
 }
