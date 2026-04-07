@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Обява-AI — AI генератор на обяви</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1d4ed8;--blue-light:#dbeafe;--blue-50:#eff6ff;
+  --bg:#f1f5f9;--card:#ffffff;--border:#cbd5e1;
+  --dark:#0f172a;--dark-700:#334155;--dark-500:#64748b;--dark-300:#cbd5e1;--dark-100:#f1f5f9;
+  --white:#ffffff;--radius:12px;--radius-sm:8px;--radius-pill:999px;
+  --olx:#7c3aed;--mobile:#dc2626;--cars:#2563eb;--facebook:#1877f2;--alo:#ea580c;--bazar:#16a34a;--imot:#991b1b;
+  --shadow:0 1px 3px rgba(15,23,42,.08),0 1px 2px rgba(15,23,42,.04);
+  --font:'Manrope',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html.dark{
+  --bg:#0f172a;--card:#1e293b;--border:#334155;
+  --dark:#f1f5f9;--dark-700:#cbd5e1;--dark-500:#94a3b8;--dark-300:#475569;--dark-100:#1e293b;
+  --white:#0f172a;--blue-light:#1e3a5f;--blue-50:#172554;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--dark);line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+.container{max-width:760px;margin:0 auto;padding:0 20px}
+nav{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;transition:background .25s}
+nav .inner{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:760px;margin:0 auto}
+.nav-left{display:flex;align-items:center;gap:12px}
+.logo{font-weight:800;font-size:1.25rem;color:var(--dark);text-decoration:none;display:flex;flex-direction:column;line-height:1.1}
+.logo-sub{font-family:var(--mono);font-size:.65rem;color:var(--dark-500);font-weight:500;letter-spacing:.02em}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-badge{font-family:var(--mono);font-size:.7rem;font-weight:600;background:var(--blue-light);color:var(--blue);padding:5px 12px;border-radius:var(--radius-pill)}
+@media(max-width:560px){.nav-badge{display:none}}
+.dark-toggle{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .15s}
+.dark-toggle:hover{border-color:var(--blue)}
+.hero{text-align:center;padding:48px 20px 32px;max-width:760px;margin:0 auto}
+.hero h1{font-size:clamp(1.6rem,4.5vw,2.4rem);font-weight:800;color:var(--dark);line-height:1.15;margin-bottom:12px;letter-spacing:-.02em}
+.hero h1 span{color:var(--blue)}
+.hero p{font-size:1.05rem;color:var(--dark-500);max-width:520px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:var(--shadow);transition:background .25s,border-color .25s}
+.card-title{font-size:.8rem;font-family:var(--mono);font-weight:600;color:var(--dark-500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title .num{background:var(--blue);color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-family:var(--font);font-size:.85rem;font-weight:500;padding:8px 16px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--card);color:var(--dark-700);cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:var(--blue-50)}
+.upload-zone svg{width:40px;height:40px;color:var(--dark-300);margin-bottom:8px}
+.upload-zone p{color:var(--dark-500);font-size:.9rem}
+.upload-zone .formats{font-family:var(--mono);font-size:.7rem;color:var(--dark-500);margin-top:4px}
+.upload-zone input{display:none}
+.img-counter{font-family:var(--mono);font-size:.72rem;color:var(--dark-500);margin-top:8px}
+.previews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px}
+.preview-item{position:relative;border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:1;background:var(--dark-100)}
+.preview-item img{width:100%;height:100%;object-fit:cover;display:block}
+.preview-item .rm-btn{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(15,23,42,.7);color:#fff;border:none;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.preview-item:hover .rm-btn{opacity:1}
+.preview-item .img-num{position:absolute;bottom:4px;left:4px;font-family:var(--mono);font-size:.6rem;font-weight:600;background:rgba(15,23,42,.7);color:#fff;padding:2px 6px;border-radius:var(--radius-pill)}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.fields-grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-size:.78rem;font-family:var(--mono);font-weight:500;color:var(--dark-500);letter-spacing:.02em}
+.field select,.field input,.field textarea{font-family:var(--font);font-size:.92rem;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--dark);outline:none;transition:border .15s}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;appearance:none;-webkit-appearance:none}
+.field select:focus,.field input:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:80px}
+.combo-wrap{display:flex;flex-direction:column;gap:6px}
+.combo-wrap input{display:none}
+.combo-wrap input.show{display:block}
+.currency-row{display:flex;align-items:center;gap:8px}
+.currency-row input{flex:1}
+.cur-toggle{font-family:var(--mono);font-size:.72rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--card);color:var(--dark-700);cursor:pointer;transition:all .15s;white-space:nowrap;min-width:60px;text-align:center}
+.cur-toggle:hover{border-color:var(--blue);color:var(--blue)}
+.cur-toggle.active-eur{background:var(--blue);color:#fff;border-color:var(--blue)}
+.cur-toggle.active-bgn{background:#059669;color:#fff;border-color:#059669}
+.tone-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.tone-pill{font-family:var(--font);font-size:.82rem;font-weight:500;padding:7px 16px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--card);color:var(--dark-700);cursor:pointer;transition:all .15s}
+.tone-pill:hover{border-color:var(--blue);color:var(--blue)}
+.tone-pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.platforms{display:flex;flex-wrap:wrap;gap:8px}
+.plat-btn{font-family:var(--mono);font-size:.78rem;font-weight:600;padding:8px 16px;border-radius:var(--radius-pill);border:2px solid;cursor:pointer;transition:all .15s;background:transparent;user-select:none}
+.plat-btn.active{color:#fff!important}
+.plat-btn[data-p="olx"]{border-color:var(--olx);color:var(--olx)}.plat-btn[data-p="olx"].active{background:var(--olx)}
+.plat-btn[data-p="mobile"]{border-color:var(--mobile);color:var(--mobile)}.plat-btn[data-p="mobile"].active{background:var(--mobile)}
+.plat-btn[data-p="cars"]{border-color:var(--cars);color:var(--cars)}.plat-btn[data-p="cars"].active{background:var(--cars)}
+.plat-btn[data-p="facebook"]{border-color:var(--facebook);color:var(--facebook)}.plat-btn[data-p="facebook"].active{background:var(--facebook)}
+.plat-btn[data-p="alo"]{border-color:var(--alo);color:var(--alo)}.plat-btn[data-p="alo"].active{background:var(--alo)}
+.plat-btn[data-p="bazar"]{border-color:var(--bazar);color:var(--bazar)}.plat-btn[data-p="bazar"].active{background:var(--bazar)}
+.plat-btn[data-p="imot"]{border-color:var(--imot);color:var(--imot)}.plat-btn[data-p="imot"].active{background:var(--imot)}
+.gen-btn{width:100%;padding:16px;font-family:var(--font);font-size:1.05rem;font-weight:700;color:#fff;background:var(--blue);border:none;border-radius:var(--radius);cursor:pointer;transition:all .15s;margin:24px 0 0;display:flex;align-items:center;justify-content:center;gap:10px}
+.gen-btn:hover{filter:brightness(1.08)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-wrap{display:none;margin:20px 0;text-align:center}
+.progress-wrap.visible{display:block}
+.progress-bar-outer{width:100%;height:8px;border-radius:99px;background:var(--dark-100);overflow:hidden}
+.progress-bar-inner{height:100%;width:0%;background:var(--blue);border-radius:99px;transition:width .4s ease}
+.progress-msg{font-family:var(--mono);font-size:.78rem;color:var(--dark-500);margin-top:10px;min-height:1.4em}
+.results{margin-top:8px;margin-bottom:60px}
+.results-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.results-actions button{font-family:var(--mono);font-size:.75rem;font-weight:600;padding:8px 18px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--card);color:var(--dark-700);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.results-actions button:hover{border-color:var(--blue);color:var(--blue)}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:var(--shadow);transition:background .25s}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.result-badge{font-family:var(--mono);font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:var(--radius-pill);color:#fff}
+.result-badge.olx{background:var(--olx)}.result-badge.mobile{background:var(--mobile)}.result-badge.cars{background:var(--cars)}.result-badge.facebook{background:var(--facebook)}.result-badge.alo{background:var(--alo)}.result-badge.bazar{background:var(--bazar)}.result-badge.imot{background:var(--imot)}
+.result-btns{display:flex;gap:6px;flex-wrap:wrap}
+.copy-btn,.regen-btn,.publish-btn{font-family:var(--mono);font-size:.72rem;font-weight:600;padding:6px 14px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--card);color:var(--dark-700);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
+.copy-btn:hover,.regen-btn:hover,.publish-btn:hover{border-color:var(--blue);color:var(--blue)}
+.copy-btn.copied{background:var(--blue);color:#fff;border-color:var(--blue)}
+.regen-btn.loading{opacity:.6;pointer-events:none}
+.result-title{font-size:1.1rem;font-weight:700;color:var(--dark);margin-bottom:8px;line-height:1.3}
+.result-desc{font-size:.9rem;color:var(--dark-700);white-space:pre-wrap;margin-bottom:12px;line-height:1.65}
+.result-price{font-size:.82rem;color:var(--blue);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.result-price svg{width:14px;height:14px}
+.result-keywords{display:flex;flex-wrap:wrap;gap:6px}
+.kw{font-family:var(--mono);font-size:.68rem;font-weight:500;padding:4px 10px;border-radius:var(--radius-pill);background:var(--dark-100);color:var(--dark-500)}
+.error-msg{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:14px 20px;border-radius:var(--radius-sm);font-size:.88rem;margin-top:12px;display:none}
+html.dark .error-msg{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
+/* PRICING */
+.pricing{padding:60px 20px;max-width:760px;margin:0 auto}
+.pricing-title{text-align:center;font-size:clamp(1.4rem,3.5vw,2rem);font-weight:800;color:var(--dark);margin-bottom:6px}
+.pricing-title span{color:var(--blue)}
+.pricing-sub{text-align:center;font-size:.95rem;color:var(--dark-500);margin-bottom:36px}
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:560px){.pricing-grid{grid-template-columns:1fr}}
+.plan{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:32px 28px;transition:all .25s;position:relative}
+.plan.featured{border-color:var(--blue);box-shadow:0 0 0 4px rgba(29,78,216,.12)}
+.plan-pop{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.68rem;font-weight:600;background:var(--blue);color:#fff;padding:4px 16px;border-radius:var(--radius-pill);white-space:nowrap}
+.plan-icon{font-size:2rem;margin-bottom:12px}
+.plan-name{font-size:1.15rem;font-weight:700;color:var(--dark);margin-bottom:4px}
+.plan-desc{font-size:.82rem;color:var(--dark-500);margin-bottom:20px;line-height:1.5}
+.plan-price{display:flex;align-items:baseline;gap:4px;margin-bottom:4px}
+.plan-price .amt{font-size:2.2rem;font-weight:800;color:var(--dark);letter-spacing:-.02em}
+.plan-price .per{font-size:.82rem;color:var(--dark-500);font-weight:500}
+.plan-price-bgn{font-family:var(--mono);font-size:.72rem;color:var(--dark-500);margin-bottom:20px}
+.plan-features{list-style:none;padding:0;margin:0 0 24px}
+.plan-features li{font-size:.85rem;color:var(--dark-700);padding:6px 0;display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.plan-features li::before{content:'✓';color:var(--blue);font-weight:700;flex-shrink:0;margin-top:1px}
+.plan-btn{display:block;width:100%;padding:14px;font-family:var(--font);font-size:.95rem;font-weight:700;text-align:center;text-decoration:none;border-radius:var(--radius-sm);transition:all .15s;border:none;cursor:pointer}
+.plan-btn.outline{background:transparent;border:2px solid var(--blue);color:var(--blue)}
+.plan-btn.outline:hover{background:var(--blue-50)}
+.plan-btn.solid{background:var(--blue);color:#fff;border:2px solid var(--blue)}
+.plan-btn.solid:hover{filter:brightness(1.08)}
+.plan-guarantee{text-align:center;margin-top:24px;font-size:.78rem;color:var(--dark-500)}
+
+/* FOOTER */
+.site-footer{background:var(--card);border-top:1px solid var(--border);padding:48px 20px 24px;margin-top:0;transition:background .25s}
+.footer-inner{max-width:760px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;margin-bottom:36px}
+@media(max-width:680px){.footer-grid{grid-template-columns:1fr 1fr;gap:24px}}
+@media(max-width:420px){.footer-grid{grid-template-columns:1fr}}
+.footer-col h4{font-size:.78rem;font-family:var(--mono);font-weight:600;color:var(--dark);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.footer-col p{font-size:.82rem;color:var(--dark-500);line-height:1.6;margin-bottom:8px}
+.footer-col a{display:block;font-size:.84rem;color:var(--dark-500);text-decoration:none;padding:4px 0;transition:color .15s}
+.footer-col a:hover{color:var(--blue)}
+.footer-brand{font-weight:800;font-size:1.1rem;color:var(--dark);margin-bottom:6px}
+.footer-brand span{font-family:var(--mono);font-size:.6rem;color:var(--dark-500);font-weight:500;display:block;margin-top:2px}
+.footer-bottom{border-top:1px solid var(--border);padding-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-copy{font-size:.75rem;color:var(--dark-500)}
+.footer-socials{display:flex;gap:12px}
+.footer-socials a{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--dark-500);text-decoration:none;font-size:.85rem;transition:all .15s}
+.footer-socials a:hover{border-color:var(--blue);color:var(--blue)}
+
+/* AUTH */
+.auth-btn{font-family:var(--mono);font-size:.75rem;font-weight:600;padding:7px 16px;border-radius:var(--radius-pill);border:1.5px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;transition:all .15s}
+.auth-btn:hover{background:var(--blue);color:#fff}
+.auth-user{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--dark-700);font-weight:600}
+.auth-user img{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border)}
+.auth-user .logout-btn{font-family:var(--mono);font-size:.65rem;font-weight:600;padding:4px 10px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--card);color:var(--dark-500);cursor:pointer;transition:all .15s}
+.auth-user .logout-btn:hover{border-color:#dc2626;color:#dc2626}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:100%;max-width:400px;position:relative;box-shadow:0 20px 60px rgba(15,23,42,.15)}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--dark-500);transition:all .15s}
+.modal-close:hover{border-color:var(--blue);color:var(--blue)}
+.modal h2{font-size:1.3rem;font-weight:800;color:var(--dark);margin-bottom:4px}
+.modal .modal-sub{font-size:.85rem;color:var(--dark-500);margin-bottom:24px}
+.auth-field{margin-bottom:14px}
+.auth-field label{display:block;font-size:.75rem;font-family:var(--mono);font-weight:500;color:var(--dark-500);margin-bottom:4px}
+.auth-field input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);font-size:.9rem;background:var(--card);color:var(--dark);outline:none;transition:border .15s}
+.auth-field input:focus{border-color:var(--blue)}
+.auth-submit{width:100%;padding:12px;font-family:var(--font);font-size:.92rem;font-weight:700;color:#fff;background:var(--blue);border:none;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;margin-top:6px}
+.auth-submit:hover{filter:brightness(1.08)}
+.auth-submit:disabled{opacity:.5;cursor:not-allowed}
+.auth-switch{text-align:center;margin-top:18px;font-size:.82rem;color:var(--dark-500)}
+.auth-switch a{color:var(--blue);cursor:pointer;font-weight:600;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-error{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 14px;border-radius:var(--radius-sm);font-size:.8rem;margin-bottom:14px;display:none}
+html.dark .auth-error{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
+
+/* INFO PAGES */
+.info-section{display:none;padding:48px 20px;max-width:760px;margin:0 auto}
+.info-section.active{display:block}
+.info-section h2{font-size:1.6rem;font-weight:800;color:var(--dark);margin-bottom:8px}
+.info-section .info-sub{font-size:.9rem;color:var(--dark-500);margin-bottom:32px}
+.info-section h3{font-size:1.05rem;font-weight:700;color:var(--dark);margin:28px 0 10px}
+.info-section p,.info-section li{font-size:.88rem;color:var(--dark-700);line-height:1.7;margin-bottom:10px}
+.info-section ul{padding-left:20px;margin-bottom:16px}
+.info-section li{margin-bottom:6px}
+.info-section a{color:var(--blue);text-decoration:none}
+.info-section a:hover{text-decoration:underline}
+.info-back{font-family:var(--mono);font-size:.78rem;font-weight:600;padding:8px 18px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--card);color:var(--dark-700);cursor:pointer;transition:all .15s;margin-bottom:24px;display:inline-flex;align-items:center;gap:6px}
+.info-back:hover{border-color:var(--blue);color:var(--blue)}
+.how-step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:16px;display:flex;gap:16px;align-items:flex-start;transition:background .25s}
+.how-step .step-num{background:var(--blue);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.85rem;font-weight:700;flex-shrink:0}
+.how-step .step-body h4{font-size:.95rem;font-weight:700;color:var(--dark);margin-bottom:4px}
+.how-step .step-body p{margin:0;font-size:.85rem;color:var(--dark-500)}
+.faq-item{border-bottom:1px solid var(--border);padding:18px 0}
+.faq-q{font-size:.92rem;font-weight:700;color:var(--dark);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.faq-q::after{content:'+';font-size:1.2rem;font-weight:400;color:var(--dark-500);transition:transform .2s}
+.faq-item.open .faq-q::after{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;font-size:.85rem;color:var(--dark-500);line-height:1.7}
+.faq-item.open .faq-a{max-height:300px;padding-top:10px}
+</style>
+</head>
+<body>
+
+<nav><div class="inner">
+  <div class="nav-left"><a href="#" class="logo">Обява-AI<span class="logo-sub">obqva-ai.bg</span></a></div>
+  <div class="nav-right">
+    <span class="nav-badge">AI генератор на обяви</span>
+    <button class="dark-toggle" id="darkToggle" title="Тъмен/Светъл режим">☀️</button>
+    <div id="authArea">
+      <button class="auth-btn" id="authBtn" type="button" onclick="openAuthModal()">Вход</button>
+    </div>
+  </div>
+</div></nav>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuthModal()">×</button>
+    <h2 id="authTitle">Вход в Обява-AI</h2>
+    <p class="modal-sub" id="authSub">Влез в акаунта си, за да генерираш обяви.</p>
+    <div class="auth-error" id="authError"></div>
+
+    <div id="authNameField" class="auth-field" style="display:none">
+      <label>Име</label>
+      <input type="text" id="authName" placeholder="Иван Иванов">
+    </div>
+    <div class="auth-field">
+      <label>Имейл</label>
+      <input type="email" id="authEmail" placeholder="ivan@example.com">
+    </div>
+    <div class="auth-field">
+      <label>Парола</label>
+      <input type="password" id="authPassword" placeholder="Минимум 6 символа">
+    </div>
+    <button class="auth-submit" type="button" id="authSubmitBtn" onclick="submitAuth()">Вход</button>
+    <div class="auth-switch" id="authSwitch">
+      Нямаш акаунт? <a onclick="toggleAuthMode()">Регистрирай се</a>
+    </div>
+  </div>
+</div>
+
+<section class="hero">
+  <h1>Продай всичко по-бързо с <span>AI-написана обява</span></h1>
+  <p>Попълни детайлите, качи снимки и получи перфектни обяви за всички български платформи — с едно натискане.</p>
+</section>
+
+<div class="container">
+
+<div class="card">
+  <div class="card-title"><span class="num">1</span> Тип обява</div>
+  <div class="pills" id="catPills"></div>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="num">2</span> Снимки <span id="photoLimitLabel" style="font-weight:400;text-transform:none;letter-spacing:0">(до 15)</span></div>
+  <div class="upload-zone" id="uploadZone">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+    <p>Плъзни снимки тук или <strong>избери файлове</strong></p>
+    <span class="formats">JPG, PNG, WEBP · до 15 снимки</span>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple>
+  </div>
+  <div class="previews-grid" id="previewsGrid"></div>
+  <div class="img-counter" id="imgCounter"></div>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="num">3</span> Детайли</div>
+  <div class="fields-grid" id="dynamicFields"></div>
+  <div style="height:14px"></div>
+  <div class="fields-grid" id="commonFields">
+    <div class="field">
+      <label>Цена</label>
+      <div class="currency-row">
+        <input type="number" id="fPrice" placeholder="напр. 12500">
+        <button class="cur-toggle active-eur" id="curToggle" type="button">€ EUR</button>
+      </div>
+      <div id="priceHint" style="font-family:var(--mono);font-size:.68rem;color:var(--dark-500);margin-top:2px"></div>
+    </div>
+    <div class="field"><label>Състояние</label><select id="fCondition"><option value="">Избери...</option><option>Ново</option><option>Като ново</option><option>Добро</option><option>Задоволително</option><option>За части/ремонт</option></select></div>
+    <div class="field"><label>Град</label><select id="fCity"><option value="">Избери град...</option></select></div>
+    <div class="field">
+      <label>Тон на обявата</label>
+      <div class="tone-pills" id="tonePills">
+        <button class="tone-pill active" data-tone="professional" type="button">🎯 Професионален</button>
+        <button class="tone-pill" data-tone="friendly" type="button">😊 Приятелски</button>
+        <button class="tone-pill" data-tone="urgent" type="button">⚡ Спешна продажба</button>
+      </div>
+    </div>
+    <div class="field full"><label>Допълнителна информация</label><textarea id="fExtra" placeholder="Екстри, дефекти, история..."></textarea></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title"><span class="num">4</span> Платформи</div>
+  <div class="platforms" id="platBtns">
+    <button class="plat-btn" data-p="olx" type="button">OLX.bg</button>
+    <button class="plat-btn" data-p="mobile" type="button">Mobile.bg</button>
+    <button class="plat-btn" data-p="cars" type="button">Cars.bg</button>
+    <button class="plat-btn" data-p="facebook" type="button">Facebook</button>
+    <button class="plat-btn" data-p="alo" type="button">Alo.bg</button>
+    <button class="plat-btn" data-p="bazar" type="button">Bazar.bg</button>
+    <button class="plat-btn" data-p="imot" type="button">Imot.bg</button>
+  </div>
+</div>
+
+<button class="gen-btn" id="genBtn" type="button" disabled>✦ Генерирай обяви с AI</button>
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+  <div class="progress-msg" id="progressMsg"></div>
+</div>
+<div class="error-msg" id="errMsg"></div>
+<div class="results" id="results"></div>
+</div>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <h2 class="pricing-title">Избери своя <span>план</span></h2>
+  <p class="pricing-sub">Неограничени AI обяви за всички български платформи.</p>
+  <div class="pricing-grid">
+
+    <div class="plan">
+      <div class="plan-icon">🟦</div>
+      <div class="plan-name">Стандарт</div>
+      <div class="plan-desc">За частни продавачи, които искат бързи и качествени обяви.</div>
+      <div class="plan-price"><span class="amt">19.99</span><span class="per">€ / година</span></div>
+      <div class="plan-price-bgn">≈ 39.10 лв / година</div>
+      <ul class="plan-features">
+        <li>Неограничени AI обяви</li>
+        <li>Всички 21 категории</li>
+        <li>До 15 снимки на обява</li>
+        <li>Всички 7 платформи</li>
+        <li>AI анализ на снимки</li>
+        <li>3 тона на обявата</li>
+        <li>Експорт на обяви</li>
+        <li>Годишен абонамент</li>
+      </ul>
+      <a href="#" class="plan-btn outline" data-plan="standard" onclick="handlePlanClick('standard',event)">Започни сега</a>
+    </div>
+
+    <div class="plan featured">
+      <div class="plan-pop">⭐ Най-популярен</div>
+      <div class="plan-icon">🟣</div>
+      <div class="plan-name">Бизнес</div>
+      <div class="plan-desc">За автокъщи, агенции и търговци с голям обем обяви.</div>
+      <div class="plan-price"><span class="amt">49.99</span><span class="per">€ / година</span></div>
+      <div class="plan-price-bgn">≈ 97.78 лв / година</div>
+      <ul class="plan-features">
+        <li>Всичко от Стандарт</li>
+        <li>Неограничен брой снимки на обява</li>
+        <li>Приоритетна AI генерация</li>
+        <li>Масово генериране (до 50 наведнъж)</li>
+        <li>Запазване на шаблони</li>
+        <li>Бизнес поддръжка по имейл</li>
+        <li>Фактура за фирма</li>
+        <li>Ранен достъп до нови функции</li>
+      </ul>
+      <a href="#" class="plan-btn solid" data-plan="business" onclick="handlePlanClick('business',event)">Започни сега</a>
+    </div>
+
+  </div>
+  <p class="plan-guarantee">🔒 Сигурно плащане чрез Stripe · Годишни абонаменти · Откажи по всяко време</p>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="info-section" id="howItWorks">
+  <button class="info-back" onclick="closeInfoPage()">← Назад</button>
+  <h2>Как работи Обява-AI?</h2>
+  <p class="info-sub">Генерирай перфектни обяви за продажба в 4 лесни стъпки.</p>
+  <div class="how-step"><div class="step-num">1</div><div class="step-body"><h4>Избери категория</h4><p>Избери от 21 категории — автомобил, имот, електроника, мебели и още. Полетата за детайли се сменят автоматично според категорията.</p></div></div>
+  <div class="how-step"><div class="step-num">2</div><div class="step-body"><h4>Качи снимки</h4><p>Добави до 15 снимки (или неограничено за Бизнес план). AI ще анализира визуално всяка снимка и ще извлече марка, модел, цвят и състояние автоматично.</p></div></div>
+  <div class="how-step"><div class="step-num">3</div><div class="step-body"><h4>Попълни детайлите</h4><p>Въведи цена, състояние, град и допълнителна информация. Избери тон — професионален, приятелски или за спешна продажба. Цената се показва и в евро, и в лева.</p></div></div>
+  <div class="how-step"><div class="step-num">4</div><div class="step-body"><h4>Генерирай с AI</h4><p>Натисни бутона и получи готови обяви за OLX.bg, Mobile.bg, Cars.bg, Facebook Marketplace, Alo.bg, Bazar.bg и Imot.bg. Копирай с едно натискане или експортирай като файл.</p></div></div>
+  <h3>Поддържани платформи</h3>
+  <p>Обява-AI генерира оптимизирани обяви за 7 от най-популярните платформи в България. Всяка обява е написана с подходящия стил — технически за Mobile.bg, приятелски за Facebook Marketplace, кратко за Alo.bg и т.н.</p>
+</section>
+
+<!-- FAQ -->
+<section class="info-section" id="faqPage">
+  <button class="info-back" onclick="closeInfoPage()">← Назад</button>
+  <h2>Често задавани въпроси</h2>
+  <p class="info-sub">Отговори на най-честите въпроси за Обява-AI.</p>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Какво е Обява-AI?</div><div class="faq-a">Обява-AI е AI инструмент, който автоматично генерира професионални обяви за продажба на български език. Просто попълваш детайли за артикула, качваш снимки и получаваш готови обяви за всички популярни български платформи.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Как AI анализира снимките?</div><div class="faq-a">Използваме най-напредналия AI модел Claude Opus 4.6, който визуално анализира всяка качена снимка. Той може да разпознае марка, модел, цвят, състояние и други детайли, които се включват автоматично в обявата.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Каква е разликата между Стандарт и Бизнес план?</div><div class="faq-a">Стандарт планът е 19.99€/година с неограничени обяви и до 15 снимки — идеален за частни продавачи. Бизнес планът е 49.99€/година с неограничени обяви, неограничен брой снимки, масово генериране и бизнес поддръжка — идеален за автокъщи и търговци.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Мога ли да откажа абонамента?</div><div class="faq-a">Да, и двата абонамента могат да бъдат отказани по всяко време от вашия Stripe акаунт — ще имате достъп до края на платения период.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">На колко платформи генерира обяви?</div><div class="faq-a">Обява-AI поддържа 7 платформи: OLX.bg, Mobile.bg, Cars.bg, Facebook Marketplace, Alo.bg, Bazar.bg и Imot.bg. Можеш да избереш кои от тях искаш.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Какви формати снимки се поддържат?</div><div class="faq-a">Поддържаме JPG, PNG и WEBP формати. Стандарт планът позволява до 15 снимки на обява, а Бизнес — неограничен брой.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Как се извършва плащането?</div><div class="faq-a">Плащанията се обработват сигурно чрез Stripe — световен лидер в онлайн разплащанията. И двата плана са годишни абонаменти. Приемаме Visa, Mastercard, Apple Pay и Google Pay. Данните ви за карта никога не достигат нашите сървъри.</div></div>
+  <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Обявите на български ли са?</div><div class="faq-a">Да, всички обяви се генерират изцяло на български език, с подходящ стил за всяка платформа.</div></div>
+</section>
+
+<!-- TERMS -->
+<section class="info-section" id="termsPage">
+  <button class="info-back" onclick="closeInfoPage()">← Назад</button>
+  <h2>Общи условия</h2>
+  <p class="info-sub">Последна актуализация: 05.04.2026</p>
+  <h3>1. Общи положения</h3>
+  <p>Настоящите Общи условия уреждат отношенията между Обява-AI (obqva-ai.bg), наричано по-долу „Услугата", и потребителите на платформата. С регистрацията и използването на Услугата, потребителят приема настоящите условия.</p>
+  <h3>2. Описание на услугата</h3>
+  <p>Обява-AI е онлайн инструмент, който използва изкуствен интелект за автоматично генериране на обяви за продажба на български език. Услугата не гарантира продажба на артикулите и не носи отговорност за съдържанието на публикуваните обяви в съответните платформи.</p>
+  <h3>3. Регистрация и акаунт</h3>
+  <p>Потребителят е длъжен да предостави валиден имейл адрес при регистрация. Всеки потребител носи отговорност за сигурността на своя акаунт и парола. Забранено е споделянето на акаунти.</p>
+  <h3>4. Планове и плащания</h3>
+  <p>Стандарт планът е годишен абонамент с неограничени генерации и до 15 снимки на обява. Бизнес планът е годишен абонамент с неограничени генерации и неограничен брой снимки. Плащанията се обработват от Stripe и са подчинени на техните условия за ползване.</p>
+  <h3>5. Интелектуална собственост</h3>
+  <p>Генерираните обяви стават собственост на потребителя. Потребителят носи пълна отговорност за използването им в съответните платформи. Обява-AI запазва правата върху платформата, дизайна и технологията.</p>
+  <h3>6. Ограничение на отговорността</h3>
+  <p>Обява-AI не носи отговорност за евентуални загуби, пропуснати ползи или щети, произтичащи от използването на генерираните обяви. Услугата се предоставя „такава каквато е".</p>
+  <h3>7. Промени в условията</h3>
+  <p>Обява-AI си запазва правото да променя настоящите условия. Потребителите ще бъдат уведомени по имейл за съществени промени.</p>
+</section>
+
+<!-- PRIVACY -->
+<section class="info-section" id="privacyPage">
+  <button class="info-back" onclick="closeInfoPage()">← Назад</button>
+  <h2>Политика за поверителност</h2>
+  <p class="info-sub">Последна актуализация: 05.04.2026</p>
+  <h3>1. Какви данни събираме</h3>
+  <p>При регистрация събираме имейл адрес и име. При използване на услугата обработваме качените снимки и въведените детайли за артикулите. При плащане данните за картата се обработват директно от Stripe — ние нямаме достъп до тях.</p>
+  <h3>2. Как използваме данните</h3>
+  <p>Данните се използват единствено за предоставяне на услугата — генериране на обяви чрез AI. Качените снимки се изпращат към Anthropic API за анализ и не се съхраняват трайно на нашите сървъри. Не продаваме и не споделяме лични данни с трети страни за маркетингови цели.</p>
+  <h3>3. Съхранение на данни</h3>
+  <p>Личните данни се съхраняват на сигурни сървъри в Европейския съюз. Качените снимки се обработват в реално време и не се съхраняват след генериране на обявата.</p>
+  <h3>4. Вашите права</h3>
+  <p>Имате право на достъп, коригиране и изтриване на личните ви данни. Може да поискате пълно изтриване на акаунта си по всяко време чрез имейл до info@obqva-ai.bg. Имате право да подадете жалба до Комисията за защита на личните данни (КЗЛД).</p>
+  <h3>5. Контакт</h3>
+  <p>За въпроси относно защитата на данните: <a href="mailto:info@obqva-ai.bg">info@obqva-ai.bg</a></p>
+</section>
+
+<!-- COOKIES -->
+<section class="info-section" id="cookiesPage">
+  <button class="info-back" onclick="closeInfoPage()">← Назад</button>
+  <h2>Политика за бисквитки</h2>
+  <p class="info-sub">Последна актуализация: 05.04.2026</p>
+  <h3>Какво са бисквитките?</h3>
+  <p>Бисквитките са малки текстови файлове, които се съхраняват в браузъра ви при посещение на уебсайт. Те помагат сайтът да запомни вашите предпочитания.</p>
+  <h3>Какви бисквитки използваме</h3>
+  <p><strong>Необходими бисквитки:</strong> За поддържане на сесията ви и запомняне на вход. Без тях сайтът не може да функционира правилно.</p>
+  <p><strong>Функционални бисквитки:</strong> За запомняне на предпочитанията ви — например тъмен/светъл режим.</p>
+  <p><strong>Аналитични бисквитки:</strong> За разбиране как потребителите използват сайта, с цел подобряване на услугата.</p>
+  <h3>Как да управлявате бисквитките</h3>
+  <p>Можете да изтриете или блокирате бисквитки чрез настройките на вашия браузър. Имайте предвид, че блокирането на необходимите бисквитки може да наруши функционалността на сайта.</p>
+</section>
+
+<!-- GDPR -->
+<section class="info-section" id="gdprPage">
+  <button class="info-back" onclick="closeInfoPage()">← Назад</button>
+  <h2>GDPR — Защита на данните</h2>
+  <p class="info-sub">Съответствие с Общия регламент за защита на данните (ЕС) 2016/679</p>
+  <h3>Администратор на лични данни</h3>
+  <p>Обява-AI (obqva-ai.bg) е администратор на личните данни, обработвани чрез платформата. За контакт: <a href="mailto:info@obqva-ai.bg">info@obqva-ai.bg</a></p>
+  <h3>Правно основание за обработка</h3>
+  <p>Обработваме лични данни на основание: изпълнение на договор (предоставяне на услугата), съгласие (при регистрация) и легитимен интерес (подобряване на услугата).</p>
+  <h3>Права на субектите на данни</h3>
+  <ul>
+    <li>Право на достъп до личните данни</li>
+    <li>Право на коригиране на неточни данни</li>
+    <li>Право на изтриване („правото да бъдеш забравен")</li>
+    <li>Право на ограничаване на обработката</li>
+    <li>Право на преносимост на данните</li>
+    <li>Право на възражение срещу обработка</li>
+  </ul>
+  <h3>Трансфер на данни</h3>
+  <p>Качените снимки се обработват чрез Anthropic API (САЩ) за генериране на обяви. Плащанията се обработват от Stripe (сертифициран по EU-US Data Privacy Framework). Данните се предават при адекватно ниво на защита.</p>
+  <h3>Надзорен орган</h3>
+  <p>Комисия за защита на личните данни (КЗЛД), гр. София, бул. „Проф. Цветан Лазаров" №2, <a href="https://www.cpdp.bg" target="_blank">www.cpdp.bg</a></p>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="footer-brand">Обява-AI<span>obqva-ai.bg</span></div>
+        <p>AI генератор на обяви за българските платформи. Продавай по-бързо, по-лесно и по-ефективно с изкуствен интелект.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Продукт</h4>
+        <a href="#pricing" onclick="closeInfoPage()">Цени</a>
+        <a href="#" onclick="openAuthModal();return false;">Вход / Регистрация</a>
+        <a href="#" onclick="openInfoPage('howItWorks');return false;">Как работи</a>
+        <a href="#" onclick="openInfoPage('faqPage');return false;">Често задавани въпроси</a>
+      </div>
+      <div class="footer-col">
+        <h4>Правна информация</h4>
+        <a href="#" onclick="openInfoPage('termsPage');return false;">Общи условия</a>
+        <a href="#" onclick="openInfoPage('privacyPage');return false;">Поверителност</a>
+        <a href="#" onclick="openInfoPage('cookiesPage');return false;">Бисквитки</a>
+        <a href="#" onclick="openInfoPage('gdprPage');return false;">GDPR</a>
+      </div>
+      <div class="footer-col">
+        <h4>Контакти</h4>
+        <a href="mailto:info@obqva-ai.bg">info@obqva-ai.bg</a>
+        <a href="mailto:support@obqva-ai.bg">Поддръжка</a>
+        <a href="https://facebook.com" target="_blank">Facebook</a>
+        <a href="https://instagram.com" target="_blank">Instagram</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 Обява-AI. Всички права запазени.</span>
+      <div class="footer-socials">
+        <a href="https://facebook.com" target="_blank" title="Facebook">f</a>
+        <a href="https://instagram.com" target="_blank" title="Instagram">in</a>
+        <a href="mailto:info@obqva-ai.bg" title="Email">@</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const BGN_RATE=1.9558;
+
+/* API HEADERS */
+const API_URL = '/api/generate';
+function getApiHeaders(){
+  return {'Content-Type':'application/json'};
+}
+const CATEGORIES=[
+  {id:'car',name:'Автомобил',icon:'🚗'},{id:'moto',name:'Мотоциклет',icon:'🏍️'},{id:'truck',name:'Камион/Бус',icon:'🚛'},
+  {id:'property_sale',name:'Имот продажба',icon:'🏠'},{id:'property_rent',name:'Имот наем',icon:'🔑'},
+  {id:'electronics',name:'Електроника',icon:'📱'},{id:'computers',name:'Компютри',icon:'💻'},{id:'appliances',name:'Бяла техника',icon:'🫙'},
+  {id:'furniture',name:'Мебели',icon:'🛋️'},{id:'fashion',name:'Дрехи/Мода',icon:'👗'},{id:'shoes',name:'Обувки',icon:'👟'},
+  {id:'kids',name:'Детски стоки',icon:'🧸'},{id:'sport',name:'Спорт',icon:'🏋️'},{id:'bicycle',name:'Велосипед',icon:'🚲'},
+  {id:'tools',name:'Инструменти',icon:'🔧'},{id:'garden',name:'Градина',icon:'🌿'},{id:'pets',name:'Домашни любимци',icon:'🐾'},
+  {id:'music',name:'Музика',icon:'🎸'},{id:'jewelry',name:'Бижута',icon:'💍'},{id:'service',name:'Услуга',icon:'🛠️'},{id:'other',name:'Друго',icon:'📦'}
+];
+const PLATFORM_MAP={car:['olx','mobile','cars','facebook','alo','bazar'],moto:['olx','mobile','facebook','bazar'],truck:['olx','mobile','cars','bazar'],property_sale:['olx','facebook','imot','bazar'],property_rent:['olx','facebook','imot'],_default:['olx','facebook','alo','bazar']};
+const PLATFORM_NAMES={olx:'OLX.bg',mobile:'Mobile.bg',cars:'Cars.bg',facebook:'Facebook Marketplace',alo:'Alo.bg',bazar:'Bazar.bg',imot:'Imot.bg'};
+const CITIES=['София','Пловдив','Варна','Бургас','Русе','Стара Загора','Плевен','Сливен','Добрич','Шумен','Перник','Хасково','Ямбол','Пазарджик','Благоевград','Велико Търново','Враца','Габрово','Видин','Кърджали','Кюстендил','Монтана','Ловеч','Търговище','Разград','Силистра','Смолян','Петрич','Сандански','Дупница','Казанлък','Асеновград','Карлово','Ботевград','Самоков','Свищов','Троян','Севлиево','Лом'];
+const CAR_BRANDS={'Alfa Romeo':{models:['Giulia','Stelvio','Giulietta','MiTo','159','147','Tonale'],engines:['1.4 TB 150к.с.','1.8 TBi 200к.с.','2.0 JTD 150к.с.','2.2 JTS 185к.с.','2.9 V6 510к.с.']},'Audi':{models:['A1','A3','A4','A5','A6','A7','A8','Q2','Q3','Q5','Q7','Q8','e-tron','TT','RS3','RS6'],engines:['1.0 TFSI 95к.с.','1.4 TFSI 150к.с.','1.5 TFSI 150к.с.','2.0 TFSI 190к.с.','2.0 TFSI 252к.с.','2.0 TDI 150к.с.','2.0 TDI 190к.с.','3.0 TDI 245к.с.','3.0 TDI 286к.с.','3.0 TFSI 340к.с.','4.0 TFSI 600к.с.']},'BMW':{models:['Серия 1','Серия 2','Серия 3','Серия 4','Серия 5','Серия 6','Серия 7','Серия 8','X1','X2','X3','X4','X5','X6','X7','Z4','iX','i4','i3'],engines:['1.5d 116к.с.','1.8i 136к.с.','2.0d 150к.с.','2.0d 190к.с.','2.0i 184к.с.','2.0i 252к.с.','3.0d 258к.с.','3.0d 286к.с.','3.0i 340к.с.','4.4i 530к.с.','M 510к.с.']},'Chevrolet':{models:['Aveo','Cruze','Captiva','Spark','Trax','Orlando','Camaro'],engines:['1.2i 85к.с.','1.4i 100к.с.','1.6i 115к.с.','2.0 VCDi 163к.с.','6.2 V8 455к.с.']},'Citroen':{models:['C1','C3','C3 Aircross','C4','C5','C5 Aircross','Berlingo','DS3','DS4','DS5'],engines:['1.2 PureTech 82к.с.','1.2 PureTech 110к.с.','1.2 PureTech 130к.с.','1.5 BlueHDi 100к.с.','1.5 BlueHDi 130к.с.','1.6 HDi 92к.с.','2.0 BlueHDi 150к.с.']},'Dacia':{models:['Logan','Sandero','Duster','Jogger','Spring','Dokker','Lodgy'],engines:['0.9 TCe 90к.с.','1.0 TCe 90к.с.','1.0 TCe 100к.с.','1.3 TCe 130к.с.','1.3 TCe 150к.с.','1.5 dCi 90к.с.','1.5 dCi 115к.с.']},'Dodge':{models:['Challenger','Charger','Durango','RAM 1500','Nitro'],engines:['3.6 V6 305к.с.','5.7 HEMI V8 375к.с.','6.2 V8 717к.с.','6.4 V8 485к.с.']},'Fiat':{models:['500','500X','Panda','Punto','Tipo','Doblo','Bravo','Grande Punto'],engines:['0.9 TwinAir 85к.с.','1.0 FireFly 70к.с.','1.2i 69к.с.','1.3 MJet 95к.с.','1.4i 95к.с.','1.6 MJet 120к.с.']},'Ford':{models:['Fiesta','Focus','Mondeo','Kuga','Puma','EcoSport','Mustang','Explorer','Galaxy','S-MAX','C-MAX','Ranger','Transit'],engines:['1.0 EcoBoost 100к.с.','1.0 EcoBoost 125к.с.','1.0 EcoBoost 155к.с.','1.5 EcoBoost 150к.с.','1.5 EcoBlue 120к.с.','2.0 EcoBlue 150к.с.','2.0 EcoBlue 190к.с.','2.3 EcoBoost 280к.с.','5.0 V8 450к.с.']},'Honda':{models:['Civic','Accord','CR-V','HR-V','Jazz','e:Ny1','City'],engines:['1.0 VTEC Turbo 126к.с.','1.5 VTEC Turbo 182к.с.','1.5 i-VTEC 130к.с.','1.6 i-DTEC 120к.с.','2.0 i-VTEC 155к.с.','2.0 Hybrid 184к.с.']},'Hyundai':{models:['i10','i20','i30','i40','Tucson','Kona','Santa Fe','Ioniq','Ioniq 5','Ioniq 6','Bayon'],engines:['1.0 T-GDI 100к.с.','1.0 T-GDI 120к.с.','1.2i 84к.с.','1.4i 100к.с.','1.5 CRDi 115к.с.','1.6 CRDi 136к.с.','1.6 T-GDI 177к.с.','1.6 T-GDI 198к.с.','2.0 CRDi 185к.с.']},'Jeep':{models:['Renegade','Compass','Cherokee','Grand Cherokee','Wrangler','Gladiator'],engines:['1.3 T4 150к.с.','1.4 MultiAir 140к.с.','1.6 MJet 120к.с.','2.0 MJet 140к.с.','2.0 MJet 170к.с.','2.2 MJet 200к.с.','3.0 V6 250к.с.','3.6 V6 285к.с.','6.4 V8 470к.с.']},'Kia':{models:['Picanto','Rio','Ceed','Proceed','Sportage','Sorento','Stonic','Niro','EV6','Stinger','Soul'],engines:['1.0 T-GDI 100к.с.','1.0 T-GDI 120к.с.','1.2i 84к.с.','1.4i 100к.с.','1.5 CRDi 115к.с.','1.6 CRDi 136к.с.','1.6 T-GDI 177к.с.','1.6 T-GDI 204к.с.','2.0 CRDi 185к.с.','2.5 T-GDI 281к.с.','3.3 V6 366к.с.']},'Lada':{models:['Niva','Vesta','Granta','XRAY','Largus','2107','2106','2105','2104','Samara'],engines:['1.5i 78к.с.','1.6i 87к.с.','1.6i 106к.с.','1.7i 83к.с.','1.8i 122к.с.']},'Land Rover':{models:['Range Rover','Range Rover Sport','Range Rover Evoque','Range Rover Velar','Discovery','Discovery Sport','Defender','Freelander'],engines:['2.0 Si4 200к.с.','2.0 Si4 250к.с.','2.0 SD4 180к.с.','2.0 SD4 240к.с.','3.0 SDV6 258к.с.','3.0 SDV6 306к.с.','3.0 P400 400к.с.','4.4 SDV8 339к.с.','5.0 V8 525к.с.']},'Lexus':{models:['IS','ES','GS','LS','NX','RX','UX','LC','LX','CT'],engines:['2.0 Turbo 245к.с.','2.5 Hybrid 218к.с.','3.0 Hybrid 354к.с.','3.5 V6 311к.с.','5.0 V8 464к.с.']},'Mazda':{models:['2','3','6','CX-3','CX-30','CX-5','CX-60','MX-5','MX-30'],engines:['1.5 SkyActiv-G 90к.с.','1.5 SkyActiv-D 105к.с.','2.0 SkyActiv-G 122к.с.','2.0 SkyActiv-G 150к.с.','2.0 SkyActiv-X 186к.с.','2.2 SkyActiv-D 150к.с.','2.2 SkyActiv-D 184к.с.','2.5 SkyActiv-G 194к.с.','3.3 SkyActiv-D 254к.с.']},'Mercedes-Benz':{models:['A-класа','B-класа','C-класа','CLA','CLS','E-класа','S-класа','GLA','GLB','GLC','GLE','GLS','G-класа','EQC','EQA','EQB','EQS','AMG GT','Vito'],engines:['1.3d 116к.с.','1.5 136к.с.','1.6d 116к.с.','2.0d 150к.с.','2.0d 194к.с.','2.0d 245к.с.','2.0 163к.с.','2.0 190к.с.','2.0 258к.с.','2.0 306к.с.','2.0 AMG 421к.с.','3.0d 286к.с.','3.0d 330к.с.','3.0 367к.с.','3.0 435к.с.','4.0 V8 AMG 510к.с.','4.0 V8 AMG 585к.с.','6.0 V12 630к.с.']},'Mini':{models:['Cooper','Countryman','Clubman','Paceman','John Cooper Works'],engines:['1.2 75к.с.','1.5 102к.с.','1.5 136к.с.','2.0 178к.с.','2.0 192к.с.','2.0 JCW 231к.с.','2.0 JCW 306к.с.']},'Mitsubishi':{models:['ASX','Eclipse Cross','L200','Outlander','Pajero','Colt','Lancer','Space Star'],engines:['1.0 71к.с.','1.2 80к.с.','1.6i 117к.с.','1.8 DI-D 150к.с.','2.0i 150к.с.','2.2 DI-D 150к.с.','2.4 MIVEC 170к.с.','2.5 DI-D 178к.с.','3.0 V6 200к.с.','3.2 DI-D 190к.с.']},'Nissan':{models:['Micra','Note','Juke','Qashqai','X-Trail','Navara','Leaf','Ariya','GT-R','350Z','370Z','Pathfinder'],engines:['1.0 DIG-T 117к.с.','1.2 DIG-S 98к.с.','1.3 DIG-T 140к.с.','1.3 DIG-T 160к.с.','1.5 dCi 110к.с.','1.6 DIG-T 163к.с.','1.7 dCi 150к.с.','2.0 dCi 177к.с.','2.5i 171к.с.','3.5 V6 300к.с.','3.8 V6 570к.с.']},'Opel':{models:['Corsa','Astra','Insignia','Mokka','Crossland','Grandland','Zafira','Meriva','Adam','Vivaro','Combo'],engines:['1.0 Turbo 90к.с.','1.2 75к.с.','1.2 Turbo 100к.с.','1.2 Turbo 130к.с.','1.4 90к.с.','1.4 Turbo 125к.с.','1.4 Turbo 150к.с.','1.5 CDTi 105к.с.','1.5 CDTi 122к.с.','1.6 CDTi 110к.с.','1.6 CDTi 136к.с.','1.6 Turbo 200к.с.','2.0 CDTi 170к.с.']},'Peugeot':{models:['108','208','308','408','508','2008','3008','5008','Partner','Rifter','Expert','Traveller'],engines:['1.0 VTi 72к.с.','1.2 PureTech 82к.с.','1.2 PureTech 110к.с.','1.2 PureTech 130к.с.','1.5 BlueHDi 100к.с.','1.5 BlueHDi 130к.с.','1.6 BlueHDi 100к.с.','1.6 THP 165к.с.','2.0 BlueHDi 150к.с.','2.0 BlueHDi 180к.с.']},'Porsche':{models:['911','718 Cayman','718 Boxster','Cayenne','Macan','Panamera','Taycan'],engines:['2.0 Turbo 252к.с.','2.0 Turbo 300к.с.','2.5 Turbo 350к.с.','2.9 V6 380к.с.','2.9 V6 440к.с.','3.0 V6 354к.с.','3.0 V6 Turbo S 440к.с.','3.0 V6 480к.с.','3.8 Turbo 580к.с.','4.0 GT3 510к.с.','4.0 Turbo S 650к.с.']},'Renault':{models:['Clio','Megane','Scenic','Kadjar','Captur','Koleos','Talisman','Kangoo','Trafic','Master','Twingo','ZOE','Arkana','Austral'],engines:['0.9 TCe 90к.с.','1.0 TCe 90к.с.','1.0 TCe 100к.с.','1.3 TCe 130к.с.','1.3 TCe 140к.с.','1.3 TCe 160к.с.','1.5 dCi 85к.с.','1.5 dCi 90к.с.','1.5 dCi 110к.с.','1.6 dCi 130к.с.','1.8 TCe 225к.с.','2.0 dCi 160к.с.']},'Seat':{models:['Ibiza','Leon','Arona','Ateca','Tarraco','Alhambra','Mii','Toledo'],engines:['1.0 TSI 95к.с.','1.0 TSI 110к.с.','1.0 TGI 90к.с.','1.4 TSI 150к.с.','1.5 TSI 130к.с.','1.5 TSI 150к.с.','1.6 TDI 115к.с.','2.0 TDI 150к.с.','2.0 TDI 190к.с.','2.0 TSI 190к.с.','2.0 TSI 300к.с.']},'Skoda':{models:['Fabia','Octavia','Superb','Kamiq','Karoq','Kodiaq','Scala','Enyaq','Rapid','Citigo','Roomster','Yeti'],engines:['1.0 TSI 95к.с.','1.0 TSI 110к.с.','1.0 TGI 90к.с.','1.4 TSI 150к.с.','1.5 TSI 150к.с.','1.6 TDI 115к.с.','2.0 TDI 150к.с.','2.0 TDI 190к.с.','2.0 TDI 200к.с.','2.0 TSI 190к.с.','2.0 TSI 245к.с.']},'Subaru':{models:['Impreza','Forester','Outback','XV','Legacy','BRZ','WRX','Levorg'],engines:['1.6i 114к.с.','2.0i 150к.с.','2.0 Turbo 268к.с.','2.0 e-Boxer 150к.с.','2.5i 175к.с.','2.5 Turbo 300к.с.']},'Suzuki':{models:['Swift','Vitara','S-Cross','Jimny','Ignis','Baleno','Across','Swace','SX4'],engines:['1.0 BoosterJet 112к.с.','1.2 DualJet 83к.с.','1.2 Hybrid 83к.с.','1.4 BoosterJet 129к.с.','1.4 BoosterJet 140к.с.','1.5 DDiS 120к.с.','1.6 VVT 120к.с.']},'Tesla':{models:['Model 3','Model Y','Model S','Model X','Cybertruck'],engines:['Standard Range','Long Range','Performance','Plaid']},'Toyota':{models:['Yaris','Yaris Cross','Corolla','Camry','C-HR','RAV4','Highlander','Land Cruiser','Hilux','Prius','Supra','Aygo','Proace','bZ4X'],engines:['1.0 VVT-i 72к.с.','1.5 VVT-i 125к.с.','1.5 Hybrid 116к.с.','1.6 D-4D 112к.с.','1.8 Hybrid 122к.с.','2.0 Hybrid 152к.с.','2.0 Hybrid 184к.с.','2.0 D-4D 143к.с.','2.4 D-4D 150к.с.','2.5 Hybrid 218к.с.','2.8 D-4D 204к.с.','3.0 Supra 340к.с.','3.5 V6 Hybrid 306к.с.','4.0 V6 271к.с.']},'Volkswagen':{models:['Polo','Golf','Golf Plus','Passat','Arteon','Tiguan','T-Roc','Touareg','T-Cross','Jetta','Caddy','Transporter','Touran','Sharan','Up!','ID.3','ID.4','ID.5','Scirocco','CC'],engines:['1.0 TSI 95к.с.','1.0 TSI 110к.с.','1.2 TSI 105к.с.','1.4 TSI 125к.с.','1.4 TSI 150к.с.','1.5 TSI 130к.с.','1.5 TSI 150к.с.','1.6 TDI 105к.с.','1.6 TDI 115к.с.','2.0 TDI 115к.с.','2.0 TDI 150к.с.','2.0 TDI 190к.с.','2.0 TDI 200к.с.','2.0 TSI 190к.с.','2.0 TSI 245к.с.','2.0 TSI R 320к.с.','3.0 V6 TDI 231к.с.','3.0 V6 TDI 286к.с.']},'Volvo':{models:['XC40','XC60','XC90','S60','S90','V40','V60','V90','C40','EX30','EX90'],engines:['1.5 T2 129к.с.','1.5 T3 163к.с.','2.0 T4 190к.с.','2.0 T5 250к.с.','2.0 T6 310к.с.','2.0 T8 390к.с.','2.0 D3 150к.с.','2.0 D4 190к.с.','2.0 D5 235к.с.']}};
+const YEARS=[];for(let y=2026;y>=1970;y--)YEARS.push(y);
+const GEARBOX=['Ръчна','Автоматична','Полуавтоматична','Вариатор'];
+const EURO=['Euro 6','Euro 5','Euro 4','Euro 3','Euro 2'];
+const DOORS=['5 врати','4 врати','3 врати','2 врати','Кабрио'];
+const FUEL=['Бензин','Дизел','Газ/Бензин','Метан/Бензин','Хибрид','Plug-in хибрид','Електрически'];
+const PROGRESS_MSGS=['🤖 AI мисли усилено...','📝 Пише перфектни заглавия...','🔍 Анализира снимките...','💡 Добавя ключови думи...','✨ Оптимизира за всяка платформа...','🎯 Финални корекции...','📊 Калкулира ценови съвети...','🚀 Почти готово!'];
+
+let selectedCat=null,selectedPlatforms=new Set(),uploadedImages=[],currencyIsEur=true,selectedTone='professional',lastGeneratedDetails=null;
+function getMaxImages(){return currentUser&&currentUser.plan==='business'?999:15;}
+const MAX_IMAGES_DEFAULT=15;
+
+/* DARK MODE */
+const darkToggle=document.getElementById('darkToggle');
+let isDark=false;try{isDark=localStorage.getItem('obqva-dark')==='1';}catch(e){}
+if(isDark)document.documentElement.classList.add('dark');
+updDarkIcon();
+darkToggle.onclick=()=>{isDark=!isDark;document.documentElement.classList.toggle('dark',isDark);try{localStorage.setItem('obqva-dark',isDark?'1':'0');}catch(e){}updDarkIcon();};
+function updDarkIcon(){darkToggle.textContent=isDark?'🌙':'☀️';}
+
+/* CITIES */
+const citySelect=document.getElementById('fCity');
+CITIES.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;citySelect.appendChild(o);});
+
+/* CATEGORIES */
+const catCt=document.getElementById('catPills');
+CATEGORIES.forEach(c=>{const p=document.createElement('button');p.type='button';p.className='pill';p.textContent=`${c.icon} ${c.name}`;p.onclick=()=>selectCategory(c.id);p.dataset.cat=c.id;catCt.appendChild(p);});
+function selectCategory(id){selectedCat=id;catCt.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.cat===id));renderDynamicFields(id);autoSelectPlatforms(id);updateGenBtn();}
+
+/* PLATFORMS */
+document.querySelectorAll('.plat-btn').forEach(b=>{b.onclick=()=>{b.classList.toggle('active');syncPlat();updateGenBtn();};});
+function syncPlat(){selectedPlatforms.clear();document.querySelectorAll('.plat-btn.active').forEach(b=>selectedPlatforms.add(b.dataset.p));}
+function autoSelectPlatforms(id){const l=PLATFORM_MAP[id]||PLATFORM_MAP._default;document.querySelectorAll('.plat-btn').forEach(b=>b.classList.toggle('active',l.includes(b.dataset.p)));syncPlat();}
+
+/* CURRENCY */
+const curToggle=document.getElementById('curToggle'),priceInput=document.getElementById('fPrice'),priceHint=document.getElementById('priceHint');
+curToggle.onclick=()=>{const v=parseFloat(priceInput.value)||0;if(currencyIsEur){currencyIsEur=false;if(v)priceInput.value=Math.round(v*BGN_RATE);curToggle.textContent='лв BGN';curToggle.className='cur-toggle active-bgn';}else{currencyIsEur=true;if(v)priceInput.value=Math.round(v/BGN_RATE);curToggle.textContent='€ EUR';curToggle.className='cur-toggle active-eur';}updatePriceHint();};
+priceInput.addEventListener('input',updatePriceHint);
+function updatePriceHint(){const v=parseFloat(priceInput.value)||0;if(!v){priceHint.textContent='';return;}priceHint.textContent=currencyIsEur?`≈ ${Math.round(v*BGN_RATE).toLocaleString('bg-BG')} лв`:`≈ ${Math.round(v/BGN_RATE).toLocaleString('bg-BG')} €`;}
+
+/* TONE */
+document.querySelectorAll('.tone-pill').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.tone-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');selectedTone=b.dataset.tone;};});
+
+/* IMAGE UPLOAD */
+const uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),previewsGrid=document.getElementById('previewsGrid'),imgCounter=document.getElementById('imgCounter');
+uploadZone.onclick=()=>fileInput.click();
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');handleFiles(e.dataTransfer.files);});
+fileInput.addEventListener('change',()=>{handleFiles(fileInput.files);fileInput.value='';});
+function handleFiles(fl){const mx=getMaxImages();const files=Array.from(fl).filter(f=>f.type.match(/image\/(jpeg|png|webp)/));files.slice(0,mx-uploadedImages.length).forEach(file=>{const r=new FileReader();r.onload=e=>{uploadedImages.push({b64:e.target.result.split(',')[1],type:file.type,dataUrl:e.target.result});renderPreviews();};r.readAsDataURL(file);});}
+function removeImage(i){uploadedImages.splice(i,1);renderPreviews();}
+function renderPreviews(){const mx=getMaxImages();previewsGrid.innerHTML='';uploadedImages.forEach((img,i)=>{const d=document.createElement('div');d.className='preview-item';d.innerHTML=`<img src="${img.dataUrl}" alt=""><button class="rm-btn">×</button><span class="img-num">${i+1}</span>`;d.querySelector('.rm-btn').onclick=()=>removeImage(i);previewsGrid.appendChild(d);});uploadZone.style.display=uploadedImages.length>=mx?'none':'';const label=mx>100?'∞':mx;imgCounter.textContent=uploadedImages.length>0?`${uploadedImages.length} / ${label} снимки`:'';}
+
+/* DYNAMIC FIELDS */
+function renderDynamicFields(catId){
+  const ct=document.getElementById('dynamicFields');ct.innerHTML='';
+  getFieldsForCategory(catId).forEach(f=>{
+    const div=document.createElement('div');div.className='field'+(f.full?' full':'');
+    const lbl=document.createElement('label');lbl.textContent=f.label;div.appendChild(lbl);
+    if(f.type==='select'){const sel=document.createElement('select');sel.id=f.id;addOpt(sel,f.placeholder||'Избери...','');(f.options||[]).forEach(o=>addOpt(sel,o,o));if(f.onChange)sel.addEventListener('change',f.onChange);div.appendChild(sel);}
+    else if(f.type==='combo'){const w=document.createElement('div');w.className='combo-wrap';const sel=document.createElement('select');sel.id=f.id;addOpt(sel,f.placeholder||'Избери...','');(f.options||[]).forEach(o=>addOpt(sel,o,o));addOpt(sel,'✏️ Друго (напиши)','__custom__');const inp=document.createElement('input');inp.type='text';inp.id=f.id+'_custom';inp.placeholder=f.customPlaceholder||'Напиши тук...';sel.addEventListener('change',()=>{inp.classList.toggle('show',sel.value==='__custom__');if(sel.value!=='__custom__')inp.value='';if(f.onChange)f.onChange();});w.appendChild(sel);w.appendChild(inp);div.appendChild(w);}
+    else if(f.type==='textarea'){const ta=document.createElement('textarea');ta.id=f.id;ta.placeholder=f.placeholder||'';div.appendChild(ta);}
+    else{const inp=document.createElement('input');inp.type=f.inputType||'text';inp.id=f.id;inp.placeholder=f.placeholder||'';div.appendChild(inp);}
+    ct.appendChild(div);
+  });
+}
+function addOpt(sel,text,val){const o=document.createElement('option');o.value=val;o.textContent=text;sel.appendChild(o);}
+
+function getFieldsForCategory(c){
+  switch(c){
+    case 'car':return[{id:'fBrand',label:'Марка',type:'combo',options:Object.keys(CAR_BRANDS).sort(),onChange:onCarBrandChange,customPlaceholder:'Напиши марка...'},{id:'fModel',label:'Модел',type:'combo',options:[],customPlaceholder:'Напиши модел...'},{id:'fEngine',label:'Двигател',type:'combo',options:[],customPlaceholder:'напр. 1.9 TDI 130к.с.'},{id:'fFuel',label:'Гориво',type:'select',options:FUEL},{id:'fYear',label:'Година',type:'select',options:YEARS},{id:'fGearbox',label:'Скоростна кутия',type:'select',options:GEARBOX},{id:'fMileage',label:'Пробег (км)',type:'input',inputType:'number',placeholder:'напр. 120000'},{id:'fPower',label:'Мощност (к.с.)',type:'input',inputType:'number',placeholder:'напр. 150'},{id:'fEuro',label:'Евростандарт',type:'select',options:EURO},{id:'fColor',label:'Цвят',type:'input',placeholder:'напр. Черен металик'},{id:'fDoors',label:'Брой врати',type:'select',options:DOORS}];
+    case 'moto':return[{id:'fBrand',label:'Марка',type:'input',placeholder:'напр. Honda'},{id:'fModel',label:'Модел',type:'input',placeholder:'напр. CBR600'},{id:'fYear',label:'Година',type:'select',options:YEARS},{id:'fCC',label:'Кубатура (cc)',type:'input',inputType:'number',placeholder:'600'},{id:'fMileage',label:'Пробег (км)',type:'input',inputType:'number'},{id:'fColor',label:'Цвят',type:'input'}];
+    case 'truck':return[{id:'fBrand',label:'Марка',type:'input'},{id:'fModel',label:'Модел',type:'input'},{id:'fYear',label:'Година',type:'select',options:YEARS},{id:'fMileage',label:'Пробег (км)',type:'input',inputType:'number'},{id:'fPayload',label:'Товароносимост (кг)',type:'input',inputType:'number'}];
+    case 'property_sale':return[{id:'fPropType',label:'Тип',type:'select',options:['Апартамент','Къща','Вила','Парцел','Офис','Магазин','Склад']},{id:'fArea',label:'Квадратура (м²)',type:'input',inputType:'number'},{id:'fLocation',label:'Квартал/Район',type:'input',placeholder:'напр. Лозенец'},{id:'fFloor',label:'Етаж',type:'input',placeholder:'напр. 5 от 8'},{id:'fBuildYear',label:'Год. на строеж',type:'input',inputType:'number'},{id:'fParking',label:'Паркинг',type:'select',options:['Да','Не','Гараж','Подземен']}];
+    case 'property_rent':return[{id:'fPropType',label:'Тип',type:'select',options:['Апартамент','Къща','Вила','Офис','Магазин','Склад']},{id:'fArea',label:'Квадратура (м²)',type:'input',inputType:'number'},{id:'fLocation',label:'Квартал/Район',type:'input',placeholder:'напр. Център'}];
+    case 'electronics':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Телефон'},{id:'fBrandModel',label:'Марка и модел',type:'input',placeholder:'напр. Samsung Galaxy S24'}];
+    case 'computers':return[{id:'fKind',label:'Вид',type:'select',options:['Лаптоп','Настолен','Монитор','Компоненти','Периферия']},{id:'fBrandModel',label:'Марка и модел',type:'input'},{id:'fSpecs',label:'Характеристики',type:'input',placeholder:'i7, 16GB RAM, 512 SSD'}];
+    case 'appliances':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Перална'},{id:'fBrandModel',label:'Марка и модел',type:'input'}];
+    case 'furniture':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Диван'},{id:'fMaterial',label:'Материал/Цвят',type:'input'},{id:'fSize',label:'Размери',type:'input',placeholder:'200x90x85 см'}];
+    case 'fashion':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Яке'},{id:'fBrand',label:'Марка',type:'input'},{id:'fSizeF',label:'Размер',type:'input',placeholder:'M, 38'}];
+    case 'shoes':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Маратонки'},{id:'fBrand',label:'Марка',type:'input'},{id:'fNumber',label:'Номер',type:'input',placeholder:'42'}];
+    case 'kids':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Количка'},{id:'fAge',label:'За възраст',type:'input',placeholder:'0-3 г.'}];
+    case 'sport':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Тежести'},{id:'fBrand',label:'Марка',type:'input'}];
+    case 'bicycle':return[{id:'fKind',label:'Вид',type:'select',options:['МТБ','Шосеен','Градски','Детски','Електрически','BMX']},{id:'fBrand',label:'Марка',type:'input'},{id:'fSizeB',label:'Размер',type:'input',placeholder:'29", рамка M'}];
+    case 'tools':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Бормашина'},{id:'fBrand',label:'Марка',type:'input'}];
+    case 'garden':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Косачка'},{id:'fBrand',label:'Марка',type:'input'}];
+    case 'pets':return[{id:'fAnimal',label:'Животно',type:'input',placeholder:'напр. Куче'},{id:'fBreed',label:'Порода',type:'input'},{id:'fPetAge',label:'Възраст',type:'input',placeholder:'2 години'}];
+    case 'music':return[{id:'fInstrument',label:'Инструмент',type:'input',placeholder:'напр. Китара'},{id:'fBrand',label:'Марка',type:'input'}];
+    case 'jewelry':return[{id:'fKind',label:'Вид',type:'input',placeholder:'напр. Пръстен'},{id:'fMaterial',label:'Материал',type:'input',placeholder:'Злато 14К'}];
+    case 'service':return[{id:'fServiceType',label:'Вид услуга',type:'input',placeholder:'напр. Почистване'},{id:'fZone',label:'Зона на обслужване',type:'input',placeholder:'София'}];
+    case 'other':return[{id:'fName',label:'Наименование',type:'input',full:true,placeholder:'Опишете какво продавате'}];
+    default:return[];
+  }
+}
+function onCarBrandChange(){const sel=document.getElementById('fBrand');const b=sel.value==='__custom__'?'':sel.value;const d=CAR_BRANDS[b];fillCombo('fModel',d?d.models:[]);fillCombo('fEngine',d?d.engines:[]);}
+function fillCombo(id,opts){const sel=document.getElementById(id);if(!sel)return;const t=sel.options[0]?sel.options[0].textContent:'Избери...';sel.innerHTML='';addOpt(sel,t,'');opts.forEach(v=>addOpt(sel,v,v));addOpt(sel,'✏️ Друго (напиши)','__custom__');const inp=document.getElementById(id+'_custom');if(inp){inp.classList.remove('show');inp.value='';}}
+
+function updateGenBtn(){document.getElementById('genBtn').disabled=!(selectedCat&&selectedPlatforms.size>0);}
+
+/* COLLECT */
+function collectDetails(){
+  const data={};const cat=CATEGORIES.find(c=>c.id===selectedCat);data.category=cat?cat.name:'';
+  document.querySelectorAll('#dynamicFields input,#dynamicFields select,#dynamicFields textarea').forEach(el=>{
+    if(el.id.endsWith('_custom'))return;const lbl=el.closest('.field')?.querySelector('label');const label=lbl?lbl.textContent:el.id;
+    let val=el.value;if(val==='__custom__'){const ci=document.getElementById(el.id+'_custom');val=ci?ci.value:'';}
+    if(val&&val!=='__custom__')data[label]=val;
+  });
+  const price=priceInput.value;const cond=document.getElementById('fCondition').value;const city=document.getElementById('fCity').value;const extra=document.getElementById('fExtra').value;
+  if(price){const eur=currencyIsEur?price:Math.round(parseFloat(price)/BGN_RATE);const bgn=currencyIsEur?Math.round(parseFloat(price)*BGN_RATE):price;data['Цена (€)']=eur;data['Цена (лв)']=bgn;}
+  if(cond)data['Състояние']=cond;if(city)data['Град']=city;if(extra)data['Допълнителна информация']=extra;
+  return data;
+}
+
+/* PROGRESS */
+const progressWrap=document.getElementById('progressWrap'),progressBar=document.getElementById('progressBar'),progressMsgEl=document.getElementById('progressMsg');
+let progressInterval=null;
+function startProgress(){progressWrap.classList.add('visible');progressBar.style.width='0%';let step=0,pct=0;progressInterval=setInterval(()=>{pct=Math.min(pct+Math.random()*12+3,92);progressBar.style.width=pct+'%';if(step<PROGRESS_MSGS.length){progressMsgEl.textContent=PROGRESS_MSGS[step];step++;}},1800);}
+function endProgress(){clearInterval(progressInterval);progressBar.style.width='100%';progressMsgEl.textContent='✅ Готово!';setTimeout(()=>progressWrap.classList.remove('visible'),1500);}
+
+/* GENERATE */
+const genBtn=document.getElementById('genBtn'),errMsg=document.getElementById('errMsg'),resultsCt=document.getElementById('results');
+genBtn.onclick=async()=>{
+  errMsg.style.display='none';resultsCt.innerHTML='';genBtn.disabled=true;genBtn.textContent='⏳ Генериране...';startProgress();
+  const details=collectDetails();lastGeneratedDetails=details;
+  const platforms=Array.from(selectedPlatforms).map(p=>PLATFORM_NAMES[p]).filter(Boolean);
+  const toneMap={professional:'Професионален, деловит, структуриран.',friendly:'Приятелски, топъл, разговорен. Използвай емоджита умерено.',urgent:'Спешна продажба! Акцент върху бързината, намалена цена, ограничено време.'};
+  const promptText=buildPrompt(details,platforms,toneMap[selectedTone]||toneMap.professional);
+  const messages=[{role:'user',content:[]}];
+  if(uploadedImages.length>0){uploadedImages.forEach(img=>{messages[0].content.push({type:'image',source:{type:'base64',media_type:img.type,data:img.b64}});});messages[0].content.push({type:'text',text:`Анализирай внимателно всичките ${uploadedImages.length} снимки.\n\n`+promptText});}
+  else{messages[0].content.push({type:'text',text:promptText});}
+  try{
+    const resp=await fetch(API_URL,{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,messages})});
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${resp.status}`);}
+    const data=await resp.json();const text=data.content.map(c=>c.text||'').join('');
+    renderResults(JSON.parse(text.replace(/```json|```/g,'').trim()).listings||[]);
+  }catch(e){errMsg.textContent=`Грешка: ${e.message}`;errMsg.style.display='block';}
+  finally{endProgress();genBtn.disabled=false;genBtn.textContent='✦ Генерирай обяви с AI';updateGenBtn();}
+};
+function buildPrompt(details,platforms,toneDesc){
+  return`Ти си експерт по онлайн обяви за продажба в България. Генерирай обяви за: ${platforms.join(', ')}.
+
+Детайли:
+${Object.entries(details).map(([k,v])=>`${k}: ${v}`).join('\n')}
+
+Тон: ${toneDesc}
+
+Стил за всяка платформа:
+OLX.bg: ясно и конкретно, цената видна
+Mobile.bg: технически детайлен стил
+Cars.bg: пълни технически характеристики
+Facebook Marketplace: приятелски и директен тон
+Alo.bg: кратко, само ключовото
+Bazar.bg: информативно и убедително
+Imot.bg: локация, инфраструктура, квадратура
+
+ВАЖНО: Пиши САМО на БЪЛГАРСКИ ЕЗИК. Цената покажи и в € и в лв.
+
+Отговори САМО с валиден JSON (без markdown):
+{"listings":[{"platform":"...","title":"...","description":"...","keywords":["5 ключови думи"],"priceTip":"..."}]}`;
+}
+
+/* REGEN SINGLE */
+async function regenPlatform(platformName,card){
+  const btn=card.querySelector('.regen-btn');btn.classList.add('loading');btn.textContent='⏳';
+  const details=lastGeneratedDetails||collectDetails();
+  const toneMap={professional:'Професионален.',friendly:'Приятелски.',urgent:'Спешна продажба!'};
+  const pt=`Регенерирай обява САМО за ${platformName}.\n\nДетайли:\n${Object.entries(details).map(([k,v])=>`${k}: ${v}`).join('\n')}\n\nТон: ${toneMap[selectedTone]||toneMap.professional}\n\nВАЖНО: Пиши на БЪЛГАРСКИ. Цена в € и лв.\n\nОтговори САМО с JSON:\n{"platform":"${platformName}","title":"...","description":"...","keywords":["5 думи"],"priceTip":"..."}`;
+  const msgs=[{role:'user',content:[]}];
+  if(uploadedImages.length>0){uploadedImages.slice(0,3).forEach(img=>{msgs[0].content.push({type:'image',source:{type:'base64',media_type:img.type,data:img.b64}});});}
+  msgs[0].content.push({type:'text',text:pt});
+  try{
+    const resp=await fetch(API_URL,{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:msgs})});
+    const data=await resp.json();const text=data.content.map(c=>c.text||'').join('');const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    const l=parsed.listings?parsed.listings[0]:parsed;
+    card.querySelector('.result-title').textContent=l.title;card.querySelector('.result-desc').textContent=l.description;
+    const pe=card.querySelector('.result-price');if(pe&&l.priceTip)pe.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 10h6M9 14h6"/></svg>${esc(l.priceTip)}`;
+    card.querySelector('.result-keywords').innerHTML=(l.keywords||[]).map(k=>`<span class="kw">${esc(k)}</span>`).join('');
+  }catch(e){console.error('Regen:',e);}
+  btn.classList.remove('loading');btn.innerHTML='🔄 Регенерирай';
+}
+
+/* RENDER RESULTS */
+function platKey(n){if(n.includes('OLX'))return'olx';if(n.includes('Mobile'))return'mobile';if(n.includes('Cars'))return'cars';if(n.includes('Facebook'))return'facebook';if(n.includes('Alo'))return'alo';if(n.includes('Bazar'))return'bazar';if(n.includes('Imot'))return'imot';return'olx';}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function renderResults(listings){
+  resultsCt.innerHTML='';if(!listings.length){resultsCt.innerHTML='<p style="text-align:center;color:var(--dark-500);padding:20px">Няма генерирани обяви.</p>';return;}
+  const actions=document.createElement('div');actions.className='results-actions';
+  actions.innerHTML=`<button type="button" onclick="copyAll()">📋 Копирай всички</button><button type="button" onclick="exportTxt()">💾 Експорт .txt</button>`;
+  resultsCt.appendChild(actions);
+  listings.forEach(l=>{const pk=platKey(l.platform);const card=document.createElement('div');card.className='result-card';card.dataset.platform=l.platform;
+    card.innerHTML=`<div class="result-header"><span class="result-badge ${pk}">${l.platform}</span><div class="result-btns"><button class="regen-btn" type="button" onclick="regenPlatform('${l.platform.replace(/'/g,"\\'")}',this.closest('.result-card'))">🔄 Регенерирай</button><button class="copy-btn" type="button" onclick="copyListing(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Копирай</button><button class="publish-btn" type="button" onclick="publishListing('${pk}',this)">🚀 Публикувай</button></div></div><div class="result-title">${esc(l.title)}</div><div class="result-desc">${esc(l.description)}</div>${l.priceTip?`<div class="result-price"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 10h6M9 14h6"/></svg>${esc(l.priceTip)}</div>`:''}<div class="result-keywords">${(l.keywords||[]).map(k=>`<span class="kw">${esc(k)}</span>`).join('')}</div>`;
+    resultsCt.appendChild(card);
+  });
+  resultsCt.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* COPY/EXPORT */
+const PLATFORM_URLS = {
+  olx: 'https://www.olx.bg/d/obiava/podai-obiava/',
+  mobile: 'https://www.mobile.bg/obiavi/pubobiava.php',
+  cars: 'https://www.cars.bg/add.php',
+  facebook: 'https://www.facebook.com/marketplace/create/item/',
+  alo: 'https://www.alo.bg/podai-obyava/',
+  bazar: 'https://www.bazar.bg/add',
+  imot: 'https://www.imot.bg/pcgi/imot.cgi?act=4'
+};
+
+function publishListing(platformKey, btn){
+  const card = btn.closest('.result-card');
+  const title = card.querySelector('.result-title').textContent;
+  const desc = card.querySelector('.result-desc').textContent;
+  const priceEl = card.querySelector('.result-price');
+  const text = title + '\n\n' + desc + (priceEl ? '\n\n' + priceEl.textContent : '');
+
+  // Copy to clipboard first
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '✓ Копирано! Отваря се...';
+    // Open platform
+    const url = PLATFORM_URLS[platformKey];
+    if(url) {
+      setTimeout(() => {
+        window.open(url, '_blank');
+        btn.innerHTML = '🚀 Публикувай';
+      }, 800);
+    }
+  }).catch(() => {
+    // Fallback if clipboard fails
+    const url = PLATFORM_URLS[platformKey];
+    if(url) window.open(url, '_blank');
+  });
+}
+function copyListing(btn){const card=btn.closest('.result-card');const t=card.querySelector('.result-title').textContent;const d=card.querySelector('.result-desc').textContent;const p=card.querySelector('.result-price');navigator.clipboard.writeText(t+'\n\n'+d+(p?'\n\n'+p.textContent:'')).then(()=>{btn.classList.add('copied');btn.innerHTML='✓ Копирано';setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Копирай';},2000);});}
+function copyAll(){const cards=document.querySelectorAll('.result-card');let all='';cards.forEach(c=>{const b=c.querySelector('.result-badge').textContent;const t=c.querySelector('.result-title').textContent;const d=c.querySelector('.result-desc').textContent;const p=c.querySelector('.result-price');all+=`═══ ${b} ═══\n${t}\n\n${d}${p?'\n\n'+p.textContent:''}\n\n\n`;});navigator.clipboard.writeText(all.trim()).then(()=>{const btn=document.querySelector('.results-actions button');const o=btn.innerHTML;btn.innerHTML='✓ Копирано!';setTimeout(()=>btn.innerHTML=o,2000);});}
+function exportTxt(){const cards=document.querySelectorAll('.result-card');let all='Обява-AI — Генерирани обяви\n'+('═'.repeat(40))+'\n\n';cards.forEach(c=>{const b=c.querySelector('.result-badge').textContent;const t=c.querySelector('.result-title').textContent;const d=c.querySelector('.result-desc').textContent;const p=c.querySelector('.result-price');const kws=Array.from(c.querySelectorAll('.kw')).map(k=>k.textContent).join(', ');all+=`═══ ${b} ═══\n${t}\n\n${d}${p?'\n\n💡 '+p.textContent:''}${kws?'\n\n🔑 '+kws:''}\n\n\n`;});const blob=new Blob([all],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='obqva-ai-obqvi.txt';a.click();URL.revokeObjectURL(a.href);}
+
+/* ═══════════════════════════════ AUTH SYSTEM ═══════════════════════════════ */
+let currentUser = null;
+let isRegisterMode = false;
+
+// Users database in localStorage (in production use Supabase)
+function getStoredUsers(){
+  try { return JSON.parse(localStorage.getItem('obqva-users') || '[]'); } catch(e){ return []; }
+}
+function saveStoredUsers(users){
+  try { localStorage.setItem('obqva-users', JSON.stringify(users)); } catch(e){}
+}
+
+// Load saved session
+try {
+  const session = localStorage.getItem('obqva-session');
+  if(session) { currentUser = JSON.parse(session); renderAuthState(); }
+} catch(e){}
+
+// Email/Password Auth (frontend-only - replace with Supabase in production)
+function submitAuth(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('authName').value.trim();
+
+  hideAuthError();
+
+  if(!email || !email.includes('@')){showAuthError('Моля, въведи валиден имейл.');return;}
+  if(password.length < 6){showAuthError('Паролата трябва да е поне 6 символа.');return;}
+  if(isRegisterMode && !name){showAuthError('Моля, въведи името си.');return;}
+
+  const users = getStoredUsers();
+
+  if(isRegisterMode){
+    // Check if email already exists
+    if(users.find(u => u.email === email)){
+      showAuthError('Този имейл вече е регистриран. Влез с него.');
+      return;
+    }
+    // Register new user
+    const newUser = {
+      name: name,
+      email: email,
+      password: password,
+      picture: null,
+      provider: 'email',
+      plan: null
+    };
+    users.push(newUser);
+    saveStoredUsers(users);
+    // Set session
+    currentUser = {name: newUser.name, email: newUser.email, picture: null, plan: null};
+    try { localStorage.setItem('obqva-session', JSON.stringify(currentUser)); } catch(e){}
+    renderAuthState();
+    closeAuthModal();
+  } else {
+    // Login - find user by email and password
+    const found = users.find(u => u.email === email && u.password === password);
+    if(found){
+      currentUser = {name: found.name, email: found.email, picture: found.picture, plan: found.plan};
+      try { localStorage.setItem('obqva-session', JSON.stringify(currentUser)); } catch(e){}
+      renderAuthState();
+      closeAuthModal();
+    } else {
+      showAuthError('Грешен имейл или парола.');
+    }
+  }
+}
+
+function renderAuthState(){
+  const area = document.getElementById('authArea');
+  // Update photo limit label
+  const pll=document.getElementById('photoLimitLabel');
+  if(pll)pll.textContent=currentUser&&currentUser.plan==='business'?'(неограничени)':'(до 15)';
+  renderPreviews();
+  if(currentUser){
+    const initials = (currentUser.name||currentUser.email||'?').charAt(0).toUpperCase();
+    const pic = currentUser.picture
+      ? `<img src="${currentUser.picture}" alt="" referrerpolicy="no-referrer">`
+      : `<span style="width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700">${initials}</span>`;
+    area.innerHTML = `<div class="auth-user">${pic}<span style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(currentUser.name||currentUser.email)}</span><button class="logout-btn" type="button" onclick="logoutUser()">Изход</button></div>`;
+  } else {
+    area.innerHTML = `<button class="auth-btn" type="button" onclick="openAuthModal()">Вход</button>`;
+  }
+}
+
+function logoutUser(){
+  currentUser = null;
+  try { localStorage.removeItem('obqva-session'); } catch(e){}
+  renderAuthState();
+}
+
+function openAuthModal(){
+  isRegisterMode = false;
+  updateAuthModalMode();
+  document.getElementById('authModal').classList.add('open');
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authName').value = '';
+  hideAuthError();
+}
+
+function closeAuthModal(){
+  document.getElementById('authModal').classList.remove('open');
+}
+
+function toggleAuthMode(){
+  isRegisterMode = !isRegisterMode;
+  updateAuthModalMode();
+  hideAuthError();
+}
+
+function updateAuthModalMode(){
+  document.getElementById('authTitle').textContent = isRegisterMode ? 'Регистрация в Обява-AI' : 'Вход в Обява-AI';
+  document.getElementById('authSub').textContent = isRegisterMode ? 'Създай акаунт, за да започнеш да генерираш обяви.' : 'Влез в акаунта си, за да генерираш обяви.';
+  document.getElementById('authNameField').style.display = isRegisterMode ? 'block' : 'none';
+  document.getElementById('authSubmitBtn').textContent = isRegisterMode ? 'Регистрация' : 'Вход';
+  document.getElementById('authSwitch').innerHTML = isRegisterMode
+    ? 'Вече имаш акаунт? <a onclick="toggleAuthMode()">Влез</a>'
+    : 'Нямаш акаунт? <a onclick="toggleAuthMode()">Регистрирай се</a>';
+}
+
+function showAuthError(msg){const el=document.getElementById('authError');el.textContent=msg;el.style.display='block';}
+function hideAuthError(){document.getElementById('authError').style.display='none';}
+
+// Close modal on overlay click
+document.getElementById('authModal').addEventListener('click',function(e){if(e.target===this)closeAuthModal();});
+
+// Enter key in auth fields
+['authEmail','authPassword','authName'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
+});
+
+// Plan click handler — Stripe Payment Links
+// ═══════════════════════════════════════════════════════
+// HOW TO SET UP STRIPE:
+// 1. Отиди на https://dashboard.stripe.com и създай акаунт
+// 2. Отиди на Products → Add product:
+//    - Стандарт: "Обява-AI Стандарт", 19.99€/год, Recurring/Yearly
+//    - Бизнес: "Обява-AI Бизнес", 49.99€/год, Recurring/Yearly
+// 3. За всеки продукт натисни "Create payment link"
+// 4. Замени линковете по-долу с реалните от Stripe:
+const STRIPE_LINKS = {
+  standard: 'https://buy.stripe.com/28E9AU5TV6EneM16OKgbm00',
+  business: 'https://buy.stripe.com/5kQaEY823aUDcDTb50gbm01'
+};
+
+function handlePlanClick(plan, e){
+  e.preventDefault();
+  if(!currentUser){
+    openAuthModal();
+    return;
+  }
+  const link = STRIPE_LINKS[plan];
+  const url = link + '?prefilled_email=' + encodeURIComponent(currentUser.email);
+  window.open(url, '_blank');
+}
+
+/* ═══════════════════════════════ INFO PAGES ═══════════════════════════════ */
+const mainContent = document.querySelector('.container');
+const heroSection = document.querySelector('.hero');
+const pricingSection = document.getElementById('pricing');
+
+function openInfoPage(id){
+  // Hide main content
+  mainContent.style.display='none';
+  heroSection.style.display='none';
+  pricingSection.style.display='none';
+  // Hide all info sections
+  document.querySelectorAll('.info-section').forEach(s=>s.classList.remove('active'));
+  // Show target
+  const target = document.getElementById(id);
+  if(target){target.classList.add('active');}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function closeInfoPage(){
+  document.querySelectorAll('.info-section').forEach(s=>s.classList.remove('active'));
+  mainContent.style.display='';
+  heroSection.style.display='';
+  pricingSection.style.display='';
+}
+
+</script>
+</body>
+</html>
