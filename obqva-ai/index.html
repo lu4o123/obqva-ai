@@ -53,6 +53,12 @@ nav .inner{display:flex;align-items:center;justify-content:space-between;padding
 .upload-zone .formats{font-family:var(--mono);font-size:.7rem;color:var(--dark-500);margin-top:4px}
 .upload-zone input{display:none}
 .img-counter{font-family:var(--mono);font-size:.72rem;color:var(--dark-500);margin-top:8px}
+.autofill-btn{margin-top:12px;font-family:var(--mono);font-size:.75rem;font-weight:600;padding:8px 18px;border-radius:var(--radius-pill);border:1.5px solid var(--blue);background:transparent;color:var(--blue);cursor:pointer;transition:all .15s;display:none;align-items:center;gap:6px}
+.autofill-btn:hover{background:var(--blue);color:#fff}
+.autofill-btn.visible{display:inline-flex}
+.autofill-btn .spinner-sm{width:14px;height:14px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.autofill-btn.loading .spinner-sm{display:block}
+.autofill-btn.loading .af-text{opacity:.6}
 .previews-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px}
 .preview-item{position:relative;border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:1;background:var(--dark-100)}
 .preview-item img{width:100%;height:100%;object-fit:cover;display:block}
@@ -284,6 +290,7 @@ html.dark .auth-error{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
   </div>
   <div class="previews-grid" id="previewsGrid"></div>
   <div class="img-counter" id="imgCounter"></div>
+  <button class="autofill-btn" id="autofillBtn" type="button"><span class="spinner-sm"></span><span class="af-text">🔍 AI разпознаване от снимки</span></button>
 </div>
 
 <div class="card">
@@ -606,7 +613,7 @@ function updatePriceHint(){const v=parseFloat(priceInput.value)||0;if(!v){priceH
 document.querySelectorAll('.tone-pill').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.tone-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');selectedTone=b.dataset.tone;};});
 
 /* IMAGE UPLOAD */
-const uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),previewsGrid=document.getElementById('previewsGrid'),imgCounter=document.getElementById('imgCounter');
+const uploadZone=document.getElementById('uploadZone'),fileInput=document.getElementById('fileInput'),previewsGrid=document.getElementById('previewsGrid'),imgCounter=document.getElementById('imgCounter'),autofillBtn=document.getElementById('autofillBtn');
 uploadZone.onclick=()=>fileInput.click();
 uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover');});
 uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
@@ -614,7 +621,55 @@ uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.r
 fileInput.addEventListener('change',()=>{handleFiles(fileInput.files);fileInput.value='';});
 function handleFiles(fl){const mx=getMaxImages();const files=Array.from(fl).filter(f=>f.type.match(/image\/(jpeg|png|webp)/));files.slice(0,mx-uploadedImages.length).forEach(file=>{const r=new FileReader();r.onload=e=>{uploadedImages.push({b64:e.target.result.split(',')[1],type:file.type,dataUrl:e.target.result});renderPreviews();};r.readAsDataURL(file);});}
 function removeImage(i){uploadedImages.splice(i,1);renderPreviews();}
-function renderPreviews(){const mx=getMaxImages();previewsGrid.innerHTML='';uploadedImages.forEach((img,i)=>{const d=document.createElement('div');d.className='preview-item';d.innerHTML=`<img src="${img.dataUrl}" alt=""><button class="rm-btn">×</button><span class="img-num">${i+1}</span>`;d.querySelector('.rm-btn').onclick=()=>removeImage(i);previewsGrid.appendChild(d);});uploadZone.style.display=uploadedImages.length>=mx?'none':'';const label=mx>100?'∞':mx;imgCounter.textContent=uploadedImages.length>0?`${uploadedImages.length} / ${label} снимки`:'';}
+function renderPreviews(){const mx=getMaxImages();previewsGrid.innerHTML='';uploadedImages.forEach((img,i)=>{const d=document.createElement('div');d.className='preview-item';d.innerHTML=`<img src="${img.dataUrl}" alt=""><button class="rm-btn">×</button><span class="img-num">${i+1}</span>`;d.querySelector('.rm-btn').onclick=()=>removeImage(i);previewsGrid.appendChild(d);});uploadZone.style.display=uploadedImages.length>=mx?'none':'';const label=mx>100?'∞':mx;imgCounter.textContent=uploadedImages.length>0?`${uploadedImages.length} / ${label} снимки`:'';autofillBtn.classList.toggle('visible',uploadedImages.length>0&&!!selectedCat);}
+
+/* AUTOFILL FROM PHOTOS */
+autofillBtn.onclick=async()=>{
+  if(!uploadedImages.length||!selectedCat)return;
+  autofillBtn.classList.add('loading');
+  const cat=CATEGORIES.find(c=>c.id===selectedCat);
+
+  if(TEST_MODE){
+    await new Promise(r=>setTimeout(r,1000));
+    applyAutofill({brand:'Volkswagen',model:'Golf',color:'Сив металик',year:'2019',condition:'Добро',fuel:'Дизел'});
+    autofillBtn.innerHTML='<span class="spinner-sm"></span><span class="af-text">✓ Полетата са попълнени!</span>';
+    setTimeout(()=>{autofillBtn.innerHTML='<span class="spinner-sm"></span><span class="af-text">🔍 AI разпознаване от снимки</span>';},2500);
+    autofillBtn.classList.remove('loading');
+    return;
+  }
+
+  const msgs=[{role:'user',content:[]}];
+  uploadedImages.slice(0,3).forEach(img=>{msgs[0].content.push({type:'image',source:{type:'base64',media_type:img.type,data:img.b64}});});
+  msgs[0].content.push({type:'text',text:`Анализирай снимките. Категория: ${cat.name}. Върни САМО валиден JSON обект с полетата, които можеш да разпознаеш. Възможни полета: brand, model, color, year, condition (Ново/Като ново/Добро/Задоволително), fuel, kind. Отговори САМО с JSON — без markdown, без обяснения, без \`\`\`.`});
+  try{
+    const resp=await fetch(API_URL,{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:msgs})});
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${resp.status}`);}
+    const data=await resp.json();
+    const text=data.content.map(c=>c.text||'').join('');
+    applyAutofill(JSON.parse(text.replace(/```json|```/g,'').trim()));
+    autofillBtn.innerHTML='<span class="spinner-sm"></span><span class="af-text">✓ Полетата са попълнени!</span>';
+    setTimeout(()=>{autofillBtn.innerHTML='<span class="spinner-sm"></span><span class="af-text">🔍 AI разпознаване от снимки</span>';},2500);
+  }catch(e){
+    console.error('Autofill:',e);
+    autofillBtn.innerHTML='<span class="spinner-sm"></span><span class="af-text">❌ '+e.message.substring(0,40)+'</span>';
+    setTimeout(()=>{autofillBtn.innerHTML='<span class="spinner-sm"></span><span class="af-text">🔍 AI разпознаване от снимки</span>';},3000);
+  }
+  autofillBtn.classList.remove('loading');
+};
+
+function applyAutofill(data){
+  const map={brand:'fBrand',model:'fModel',color:'fColor',year:'fYear',fuel:'fFuel',kind:'fKind'};
+  Object.entries(data).forEach(([k,v])=>{
+    const fId=map[k];if(!fId)return;
+    const el=document.getElementById(fId);if(!el)return;
+    if(el.tagName==='SELECT'){
+      const opts=Array.from(el.options).map(o=>o.value);
+      if(opts.includes(String(v))){el.value=String(v);el.dispatchEvent(new Event('change'));}
+      else{const ci=document.getElementById(fId+'_custom');if(ci){el.value='__custom__';el.dispatchEvent(new Event('change'));ci.value=v;ci.classList.add('show');}}
+    } else {el.value=v;}
+  });
+  if(data.condition){const c=document.getElementById('fCondition');if(Array.from(c.options).map(o=>o.value).includes(data.condition))c.value=data.condition;}
+}
 
 /* DYNAMIC FIELDS */
 function renderDynamicFields(catId){
@@ -628,6 +683,7 @@ function renderDynamicFields(catId){
     else{const inp=document.createElement('input');inp.type=f.inputType||'text';inp.id=f.id;inp.placeholder=f.placeholder||'';div.appendChild(inp);}
     ct.appendChild(div);
   });
+  autofillBtn.classList.toggle('visible',uploadedImages.length>0&&!!selectedCat);
 }
 function addOpt(sel,text,val){const o=document.createElement('option');o.value=val;o.textContent=text;sel.appendChild(o);}
 
