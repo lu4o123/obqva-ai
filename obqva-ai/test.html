@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Обява-AI — AI генератор на обяви</title>
+<title>Обява-AI — ТЕСТ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -342,54 +342,7 @@ html.dark .auth-error{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
 <div class="results" id="results"></div>
 </div>
 
-<!-- PRICING -->
-<section class="pricing" id="pricing">
-  <h2 class="pricing-title">Избери своя <span>план</span></h2>
-  <p class="pricing-sub">Неограничени AI обяви за всички български платформи.</p>
-  <div class="pricing-grid">
 
-    <div class="plan">
-      <div class="plan-icon">🟦</div>
-      <div class="plan-name">Стандарт</div>
-      <div class="plan-desc">За частни продавачи, които искат бързи и качествени обяви.</div>
-      <div class="plan-price"><span class="amt">19.99</span><span class="per">€ / година</span></div>
-      <div class="plan-price-bgn">≈ 39.10 лв / година</div>
-      <ul class="plan-features">
-        <li>Неограничени AI обяви</li>
-        <li>Всички 21 категории</li>
-        <li>До 15 снимки на обява</li>
-        <li>Всички 7 платформи</li>
-        <li>AI анализ на снимки</li>
-        <li>3 тона на обявата</li>
-        <li>Експорт на обяви</li>
-        <li>Годишен абонамент</li>
-      </ul>
-      <a href="#" class="plan-btn outline" data-plan="standard" onclick="handlePlanClick('standard',event)">Започни сега</a>
-    </div>
-
-    <div class="plan featured">
-      <div class="plan-pop">⭐ Най-популярен</div>
-      <div class="plan-icon">🟣</div>
-      <div class="plan-name">Бизнес</div>
-      <div class="plan-desc">За автокъщи, агенции и търговци с голям обем обяви.</div>
-      <div class="plan-price"><span class="amt">49.99</span><span class="per">€ / година</span></div>
-      <div class="plan-price-bgn">≈ 97.78 лв / година</div>
-      <ul class="plan-features">
-        <li>Всичко от Стандарт</li>
-        <li>Неограничен брой снимки на обява</li>
-        <li>Приоритетна AI генерация</li>
-        <li>Масово генериране (до 50 наведнъж)</li>
-        <li>Запазване на шаблони</li>
-        <li>Бизнес поддръжка по имейл</li>
-        <li>Фактура за фирма</li>
-        <li>Ранен достъп до нови функции</li>
-      </ul>
-      <a href="#" class="plan-btn solid" data-plan="business" onclick="handlePlanClick('business',event)">Започни сега</a>
-    </div>
-
-  </div>
-  <p class="plan-guarantee">🔒 Сигурно плащане чрез Stripe · Годишни абонаменти · Откажи по всяко време</p>
-</section>
 
 <!-- HOW IT WORKS -->
 <section class="info-section" id="howItWorks">
@@ -506,7 +459,6 @@ html.dark .auth-error{background:#450a0a;border-color:#7f1d1d;color:#fca5a5}
       </div>
       <div class="footer-col">
         <h4>Продукт</h4>
-        <a href="#pricing" onclick="closeInfoPage()">Цени</a>
         <a href="#" onclick="openAuthModal();return false;">Вход / Регистрация</a>
         <a href="#" onclick="openInfoPage('howItWorks');return false;">Как работи</a>
         <a href="#" onclick="openInfoPage('faqPage');return false;">Често задавани въпроси</a>
@@ -1040,7 +992,7 @@ function handlePlanClick(plan, e){
 /* ═══════════════════════════════ INFO PAGES ═══════════════════════════════ */
 const mainContent = document.querySelector('.container');
 const heroSection = document.querySelector('.hero');
-const pricingSection = document.getElementById('pricing');
+const pricingSection = document.getElementById('pricing') || document.createElement('div');
 
 function openInfoPage(id){
   // Hide main content
@@ -1062,6 +1014,13 @@ function closeInfoPage(){
   pricingSection.style.display='';
 }
 
+
+/* AUTO ADMIN FOR TEST PAGE */
+if(!currentUser){
+  currentUser = {name:'Admin',email:'lu4obusiness@gmail.com',picture:null,plan:'business'};
+  try{localStorage.setItem('obqva-session',JSON.stringify(currentUser));}catch(e){}
+  renderAuthState();
+}
 </script>
 </body>
 </html>
